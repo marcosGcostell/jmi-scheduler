@@ -1,0 +1,16 @@
+{
+  "name": "jmi-scheduler",
+  "version": "1.0.0",
+  "description": "JMI Obras Scheduler",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\""
+  },
+  "author": "Kuantik Software",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "prettier": "^3.8.0"
+  }
+}
