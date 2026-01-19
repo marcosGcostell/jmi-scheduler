@@ -1,19 +1,16 @@
-import validator from 'validator';
-
 import * as User from '../models/user.model.js';
+import * as authService from './auth.service.js';
+import AppError from '../utils/app-error.js';
 
-const validateEmailFormat = catchAsync(async (req, res, next) => {
-  const { email } = req.body;
-  // Continue to validate other fields if no data
-  if (!username) return next();
+export const createUser = async data => {
+  const { email, full_name, password, role } = data;
 
-  const result = _isValidUserName(username);
-
-  if (!result.valid) {
-    return next(new AppError(400, result.message));
+  const userAlreadyExist = User.getUserByEmail(email.toLowerCase());
+  if (userAlreadyExist?.id) {
+    throw new AppError(409, 'Ya hay un usuario registrado con este email');
   }
 
-  next();
-});
-
-export default validateEmailFormat;
+  if (!validatedPassword(password)) {
+    throw new AppError(422, 'La contraseña no es segura');
+  }
+};

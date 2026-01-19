@@ -23,8 +23,21 @@ export const getUser = async id => {
   return rows[0];
 };
 
+export const getUserByEmail = async email => {
+  const { rows } = await pool.query(
+    `
+    SELECT id, email, full_name, role
+    FROM users
+    WHERE email = $1
+    `,
+    [email],
+  );
+
+  return rows[0];
+};
+
 export const createUser = async data => {
-  const { email, full_name, password, role } = data;
+  const { email, full_name, password_hash, role } = data;
 
   const { rows } = await pool.query(
     `
@@ -32,7 +45,7 @@ export const createUser = async data => {
     VALUES ($1, $2, $3, $4)
     RETURNING id, email, full_name, role
   `,
-    [email, full_name, password, role],
+    [email, full_name, password_hash, role],
   );
 
   return rows[0];

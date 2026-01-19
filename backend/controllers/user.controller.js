@@ -1,50 +1,6 @@
+import * as userService from '../services/user.service.js';
+
 import catchAsync from '../utils/catch-async.js';
-import AppError from '../utils/app-error.js';
-
-const _filterFields = (obj, allowedFields) => {
-  const filteredObj = {};
-  Object.keys(obj).forEach(key => {
-    if (allowedFields.includes(key)) {
-      filteredObj[key] = obj[key];
-    }
-  });
-  return filteredObj;
-};
-
-export const validateUserData = catchAsync(async (req, res, next) => {
-  const { data } = req.body;
-  // Continue to update other fields if no data
-  if (!data) return next();
-
-  next();
-});
-
-export const userExists = catchAsync(async (req, res, next) => {
-  const { username, email } = req.body;
-
-  if (!username && !email) {
-    return next(new AppError(400, 'Field can not be empty'));
-  }
-  if (email && !User.isValidEmail(email)) {
-    return next(new AppError(400, 'Please provide a valid email'));
-  }
-
-  const user = await User.findOne({
-    $or: [{ email }, { usernameToLower: username?.toLowerCase() }],
-  });
-
-  const checkedField = username ? 'username' : 'email';
-  if (user) {
-    return next(
-      new AppError(400, `User with this ${checkedField} already exists`),
-    );
-  }
-
-  res.status(200).json({
-    status: 'success',
-    isValid: true,
-  });
-});
 
 export const getAllUsers = catchAsync(async (req, res, next) => {
   // Execute the query
@@ -60,7 +16,16 @@ export const getAllUsers = catchAsync(async (req, res, next) => {
   });
 });
 
-export const createUser = catchAsync(async (req, res, next) => {});
+export const createUser = catchAsync(async (req, res, next) => {
+  const user = await userService.createUser(req.body);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      user,
+    },
+  });
+});
 
 export const getUser = catchAsync(async (req, res, next) => {
   const { user } = req;
