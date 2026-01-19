@@ -20,7 +20,7 @@ export const getUser = async id => {
     [id],
   );
 
-  return rows;
+  return rows[0];
 };
 
 export const createUser = async data => {
@@ -28,7 +28,7 @@ export const createUser = async data => {
 
   const { rows } = await pool.query(
     `
-    INSERT INTO users (email, full_name, password_hash, role)
+    INSERT INTO users (email, full_name, password, role)
     VALUES ($1, $2, $3, $4)
     RETURNING id, email, full_name, role
   `,
@@ -50,6 +50,8 @@ export const updateUser = async (id, data) => {
     `,
     [email, full_name, role, active, id],
   );
+
+  return rows[0];
 };
 
 export const disableUser = async id => {
@@ -57,9 +59,11 @@ export const disableUser = async id => {
     `
     UPDATE users
     SET active = false
-    WHERE id = $5
+    WHERE id = $1
     RETURNING id, email, full_name, role
     `,
-    [email, full_name, role, active, id],
+    [id],
   );
+
+  return rows[0];
 };

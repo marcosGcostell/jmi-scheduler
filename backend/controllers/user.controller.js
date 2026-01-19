@@ -1,28 +1,5 @@
-import User from '../models/user-model.js';
 import catchAsync from '../utils/catch-async.js';
 import AppError from '../utils/app-error.js';
-import { RESERVED_USER_NAMES } from '../models/utils/config.js';
-
-const _isValidUserName = username => {
-  const usernameRegex = /^[a-zA-Z][a-zA-Z0-9_]*$/;
-
-  if (!usernameRegex.test(username)) {
-    return {
-      valid: false,
-      message:
-        'User name should start with a letter and use only letters, numbers or underscore(_)',
-    };
-  }
-
-  if (RESERVED_USER_NAMES.includes(username.toLowerCase())) {
-    return {
-      valid: false,
-      message: 'This user name is reserved',
-    };
-  }
-
-  return { valid: true };
-};
 
 const _filterFields = (obj, allowedFields) => {
   const filteredObj = {};
@@ -33,20 +10,6 @@ const _filterFields = (obj, allowedFields) => {
   });
   return filteredObj;
 };
-
-export const validateUserName = catchAsync(async (req, res, next) => {
-  const { username } = req.body;
-  // Continue to validate other fields if no data
-  if (!username) return next();
-
-  const result = _isValidUserName(username);
-
-  if (!result.valid) {
-    return next(new AppError(400, result.message));
-  }
-
-  next();
-});
 
 export const validateUserData = catchAsync(async (req, res, next) => {
   const { data } = req.body;
