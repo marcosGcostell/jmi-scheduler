@@ -36,8 +36,21 @@ export const getUserByEmail = async email => {
   return rows[0];
 };
 
+export const findUserToLogIn = async email => {
+  const { rows } = await pool.query(
+    `
+    SELECT id, email, full_name, password, role, active
+    FROM users
+    WHERE email = $1
+    `,
+    [email],
+  );
+
+  return rows[0];
+};
+
 export const createUser = async data => {
-  const { email, full_name, password_hash, role } = data;
+  const { email, fullName, passwordHash, role } = data;
 
   const { rows } = await pool.query(
     `
@@ -45,7 +58,7 @@ export const createUser = async data => {
     VALUES ($1, $2, $3, $4)
     RETURNING id, email, full_name, role
   `,
-    [email, full_name, password_hash, role],
+    [email, fullName, passwordHash, role],
   );
 
   return rows[0];
