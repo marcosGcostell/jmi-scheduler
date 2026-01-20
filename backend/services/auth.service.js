@@ -1,10 +1,19 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
 
-import { PASSWORD_MIN_LENGTH, ENCRYPT_STRENGTH } from '../utils/config.js';
+import {
+  APP_LOGO,
+  PASSWORD_MIN_LENGTH,
+  ENCRYPT_STRENGTH,
+  PASSWORD_RESET_EXPIRES,
+} from '../utils/config.js';
 import * as User from '../models/user.model.js';
 import * as Auth from '../models/auth.model.js';
 import AppError from '../utils/app-error.js';
+import sendEmail from '../utils/email.js';
 
 const FORBIDDEN_CHARS_REGEX = /[\s\x00-\x1F\x7F]/;
 const LOWERCASE_REGEX = /[a-z]/;
@@ -64,6 +73,14 @@ const _hashPassword = async plainPassword => {
   return bcrypt.hash(plainPassword, ENCRYPT_STRENGTH);
 };
 
+const _generateResetCode = () => {
+  return Math.floor(Math.random() * 1000000)
+    .toString()
+    .padStart(6, '0');
+};
+
+// EXPORTED FUNCTIONS
+
 export const validateAndHashPassword = async password => {
   const passwordError = _validatePasswordPolicy(password);
   if (passwordError.length) {
@@ -109,4 +126,43 @@ export const updatePassword = async (loggedUser, { oldPassword, password }) => {
   const token = _signToken(user.id);
 
   return { user, token };
+};
+
+export const saveUserResetCode = async email => {
+  if (!email) throw new AppError(400, 'Por favor, introduzca su email.');
+
+  const user = await User.getUserByEmail(email.toLowerCase().trim());
+  if (!user)
+    throw new AppError(
+      400,
+      'No existe ningún usuario registrado con este email',
+    );
+
+  const resetCode = _generateResetCode();
+  const resetCodeHash = crypto
+    .createHash('sha256')
+    .update(resetCode)
+    .digest('hex');
+
+  Auth.saveResetCode(user.id, { resetCodeHash, PASSWORD_RESET_EXPIRES });
+
+  return resetCode;
+};
+
+export const sendResetPasswordEmail = (email, resetCode) => {
+  const subject = 'JMI Obras Control Horario - restablecer contraseña';
+  const text = `Código para restablecer la contraseña:\n\n${resetCode}\n\nEste código es válido por ${PASSWORD_RESET_EXPIRES} minutos. Si no lo ha solicitado, por favor, cambie la contraseña en la aplicación.`;
+
+  let html = readFileSync(
+    resolve('templates', 'reset-password-email.html'),
+    'utf8',
+  );
+
+  html = html.replace('{%LOGO%}', APP_LOGO);
+  html = html.replace('{%EXPIRATION%}', PASSWORD_RESET_EXPIRES.toString());
+  resetCode.forEach((digit, i) => {
+    html = html.replace(`{%N${i}%}`, digit[i]);
+  });
+
+  sendEmail({ email: email, subject, text, html });
 };

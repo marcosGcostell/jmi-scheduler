@@ -4,9 +4,9 @@ import catchAsync from '../utils/catch-async.js';
 import AppError from '../utils/app-error.js';
 
 export const validateUserData = catchAsync(async (req, res, next) => {
-  const { email, full_name, password } = req.body;
+  const { email, fullName, password } = req.body;
 
-  if (!email || !full_name || !password) {
+  if (!email || !fullName || !password) {
     return next(
       new AppError(
         400,

@@ -52,7 +52,7 @@ export const createUser = async data => {
 };
 
 export const updateUser = async (id, data) => {
-  const { email, full_name, role, active } = data;
+  const { email, fullName, role, active } = data;
 
   const { rows } = await pool.query(
     `
@@ -61,7 +61,7 @@ export const updateUser = async (id, data) => {
     WHERE id = $5
     RETURNING id, email, full_name, role
     `,
-    [email, full_name, role, active, id],
+    [email, fullName, role, active, id],
   );
 
   return rows[0];
