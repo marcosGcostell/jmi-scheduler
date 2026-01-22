@@ -7,6 +7,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 
 import userRouter from './routers/user.route.js';
+import companyRouter from './routers/company.route.js';
 import globalErrorHandler from './controllers/error.controller.js';
 
 dotenv.config({ path: './config.env' });
@@ -48,6 +49,7 @@ app.use((req, res, next) => {
 
 // ROUTES
 app.use('/api/v1/users', userRouter);
+app.use('/api/v1/companies', companyRouter);
 
 // ERROR MIDDLEWARE
 app.use(globalErrorHandler);

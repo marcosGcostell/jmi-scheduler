@@ -1,5 +1,4 @@
 import * as User from '../models/user.model.js';
-import * as Auth from '../models/auth.model.js';
 import * as authService from './auth.service.js';
 import AppError from '../utils/app-error.js';
 
@@ -43,14 +42,14 @@ export const updateUser = async (id, data) => {
     email: email?.toLowerCase().trim() || user.email,
     fullName: fullName?.trim() || user.full_name,
     role: role || user.role || 'user',
-    active: active || true,
+    active: active ?? user.active ?? true,
   };
 
   return User.updateUser(user.id, newData);
 };
 
 export const deleteUser = async email => {
-  const user = await Auth.findUserToLogIn(email.toLowerCase().trim());
+  const user = await User.getUserByEmail(email?.toLowerCase().trim());
   if (!user || !user?.active)
     throw new AppError(
       400,
