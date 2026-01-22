@@ -23,9 +23,8 @@ export const getCompany = catchAsync(async (req, res, next) => {
   // Send response
   res.status(200).json({
     status: 'success',
-    results: companies.length,
     data: {
-      companies,
+      company,
     },
   });
 });
