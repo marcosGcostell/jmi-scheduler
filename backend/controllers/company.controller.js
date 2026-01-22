@@ -18,7 +18,7 @@ export const getAllCompanies = catchAsync(async (req, res, next) => {
 
 export const createCompany = catchAsync(async (req, res, next) => {
   // Execute the query
-  const company = await companyService.createCompany();
+  const company = await companyService.createCompany(req.body?.name);
 
   // Send response
   res.status(200).json({

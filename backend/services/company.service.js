@@ -1,4 +1,4 @@
-import Company from '../models/company.model.js';
+import * as Company from '../models/company.model.js';
 import AppError from '../utils/app-error.js';
 
 export const getAllCompanies = async () => {
@@ -32,7 +32,7 @@ export const updateCompany = async (id, data) => {
 
   const company = await Company.updateCompany(id, {
     name: name?.trim() || oldCompany.name,
-    isMain: isMain ?? oldCompany.isMain ?? false,
+    isMain: isMain ?? oldCompany.is_main ?? false,
     active: active ?? oldCompany.active ?? true,
   });
 

@@ -20,3 +20,5 @@ router.route('/:id').patch(companyController.udpateCompany);
 router.use(authController.restrictTo('admin'));
 
 router.route('/:id').delete(companyController.deleteCompany);
+
+export default router;

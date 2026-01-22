@@ -1,5 +1,4 @@
 import * as User from '../models/user.model.js';
-import * as Auth from '../models/auth.model.js';
 import * as authService from './auth.service.js';
 import AppError from '../utils/app-error.js';
 

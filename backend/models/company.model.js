@@ -43,7 +43,7 @@ export const createCompany = async data => {
 
   const { rows } = await pool().query(
     `
-    INSERT INTO users (name)
+    INSERT INTO companies (name)
     VALUES ($1)
     RETURNING id, name, is_main, active
   `,
@@ -63,8 +63,7 @@ export const updateCompany = async (id, data) => {
     WHERE id = $4
     RETURNING id, name, is_main, active
   `,
-    [name, isMain, active],
-    id,
+    [name, isMain, active, id],
   );
 
   return rows[0];
