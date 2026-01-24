@@ -45,30 +45,31 @@ export const createWorker = async data => {
   return worker;
 };
 
-export const updateWorker = async (id, data) => {
+export const updateWorker = async (id, data, userRole) => {
   const { fullName, userId, companyId, active } = data;
 
-  const oldCompany = await Company.getCompany(id);
-  if (!oldCompany) {
-    throw new AppError(400, 'La empresa no existe.');
+  const worker = await Worker.getWorker(id);
+  if (!worker) {
+    throw new AppError(400, 'El trabajador no existe.');
   }
 
   const newData = {
-    name: name?.trim() || oldCompany.name,
-    isMain: isMain ?? oldCompany.is_main ?? false,
-    active: active ?? oldCompany.active ?? true,
+    fullName: fullName.trim() || worker.full_name,
   };
 
-  return Company.updateCompany(id, newData);
+  if (userRole === 'admin') {
+    newData.userId = userId ?? worker.userId;
+    newData.companyId = companyId || worker.companyId;
+    newData.active = active ?? worker.active ?? true;
+  }
+
+  return Worker.updateWorker(id, newData);
 };
 
-export const deleteCompany = async id => {
-  const company = await Company.getCompany(id);
-  if (!company || !company?.active)
-    throw new AppError(400, 'La empresa no existe o ya está deshabilitada');
+export const deleteWorker = async id => {
+  const worker = await Worker.getWorker(id);
+  if (!worker || !worker?.active)
+    throw new AppError(400, 'El trabajador no existe o ya está deshabilitado.');
 
-  if (company.is_main)
-    throw new AppError(400, 'No se puede deshabilitar la empresa principal');
-
-  return Company.disableCompany(company.id);
+  return Worker.disableWorker(worker.id);
 };

@@ -1,68 +1,70 @@
-import * as companyService from '../services/company.service.js';
-
+import * as workerService from '../services/worker.service.js';
 import catchAsync from '../utils/catch-async.js';
 
-export const getAllCompanies = catchAsync(async (req, res, next) => {
+export const getAllWorkers = catchAsync(async (req, res, next) => {
   // Execute the query
-  const companies = await companyService.getAllCompanies();
+  const workers = await workerService.getAllWorkers();
 
   // Send response
   res.status(200).json({
     status: 'success',
-    results: companies.length,
+    results: workers.length,
     data: {
-      companies,
+      workers,
     },
   });
 });
 
-export const getCompany = catchAsync(async (req, res, next) => {
+export const getWorker = catchAsync(async (req, res, next) => {
   // Execute the query
-  const company = await companyService.getCompany(req.params.id);
-
-  // Send response
-  res.status(200).json({
-    status: 'success',
-    data: {
-      company,
-    },
-  });
-});
-
-export const createCompany = catchAsync(async (req, res, next) => {
-  // Execute the query
-  const company = await companyService.createCompany(req.body?.name);
+  const worker = await workerService.getWorker(req.params.id);
 
   // Send response
   res.status(200).json({
     status: 'success',
     data: {
-      company,
+      worker,
     },
   });
 });
 
-export const udpateCompany = catchAsync(async (req, res, next) => {
+export const createWorker = catchAsync(async (req, res, next) => {
   // Execute the query
-  const data = (req.user.role = 'admin' ? req.body : { name: req.body?.name });
-  const company = await companyService.updateCompany(req.params.id, data);
+  const worker = await workerService.createWorker(req.body);
 
   // Send response
   res.status(200).json({
     status: 'success',
     data: {
-      company,
+      worker,
     },
   });
 });
 
-export const deleteCompany = catchAsync(async (req, res, next) => {
-  const company = await companyService.deleteCompany(req.params.id);
+export const updateWorker = catchAsync(async (req, res, next) => {
+  // Execute the query
+  const worker = await workerService.updateWorker(
+    req.params.id,
+    req.body,
+    req.user.role,
+  );
+
+  // Send response
+  res.status(200).json({
+    status: 'success',
+    data: {
+      worker,
+    },
+  });
+});
+
+export const deleteWorker = catchAsync(async (req, res, next) => {
+  const worker = await workerService.deleteWorker(req.params.id);
 
   res.status(200).json({
     status: 'success',
     data: {
-      company,
+      worker,
     },
   });
 });

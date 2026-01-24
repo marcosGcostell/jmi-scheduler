@@ -51,10 +51,10 @@ export const updateCompany = async (id, data) => {
 export const deleteCompany = async id => {
   const company = await Company.getCompany(id);
   if (!company || !company?.active)
-    throw new AppError(400, 'La empresa no existe o ya está deshabilitada');
+    throw new AppError(400, 'La empresa no existe o ya está deshabilitada.');
 
   if (company.is_main)
-    throw new AppError(400, 'No se puede deshabilitar la empresa principal');
+    throw new AppError(400, 'No se puede deshabilitar la empresa principal.');
 
   return Company.disableCompany(company.id);
 };
