@@ -2,8 +2,9 @@ import { getPool } from '../db/pool.js';
 
 const pool = () => getPool();
 
-export const getAllWorkers = async () => {
-  const { rows } = await pool().query(`
+export const getAllWorkers = async onlyActive => {
+  const { rows } = await pool().query(
+    `
     SELECT w.id, w.full_name, w.active,
     json_build_object(
       'id', c.id,
@@ -11,8 +12,11 @@ export const getAllWorkers = async () => {
     ) AS company
     FROM workers w
     LEFT JOIN companies c ON w.company_id = c.id
+    WHERE ($1::BOOLEAN IS NULL OR active = $1)
     ORDER BY c.is_main DESC NULLS LAST, c.name ASC, w.active DESC, w.full_name ASC
-    `);
+    `,
+    [onlyActive],
+  );
 
   return rows;
 };

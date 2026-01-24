@@ -1,8 +1,8 @@
 import * as Worker from '../models/worker.model.js';
 import AppError from '../utils/app-error.js';
 
-export const getAllWorkers = async () => {
-  return Worker.getAllWorkers();
+export const getAllWorkers = async onlyActive => {
+  return Worker.getAllWorkers(onlyActive);
 };
 
 export const getWorker = async id => {

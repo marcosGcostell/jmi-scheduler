@@ -3,7 +3,7 @@ import catchAsync from '../utils/catch-async.js';
 
 export const getAllWorkers = catchAsync(async (req, res, next) => {
   // Execute the query
-  const workers = await workerService.getAllWorkers();
+  const workers = await workerService.getAllWorkers(req.active);
 
   // Send response
   res.status(200).json({
