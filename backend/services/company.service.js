@@ -41,12 +41,19 @@ export const createCompany = async name => {
   return company;
 };
 
-export const updateCompany = async (id, data) => {
+export const updateCompany = async (id, data, isAdmin) => {
   const { name, isMain, active } = data;
 
   const company = await Company.getCompany(id);
   if (!company) {
     throw new AppError(400, 'La empresa no existe.');
+  }
+
+  if (company.isMain && !isAdmin) {
+    throw new AppError(
+      403,
+      'No tiene permiso para modificar la empresa principal.',
+    );
   }
 
   const newData = {

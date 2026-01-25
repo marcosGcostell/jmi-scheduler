@@ -4,7 +4,7 @@ import AppError from '../utils/app-error.js';
 export const validateDataForCompany = catchAsync(async (req, res, next) => {
   const { name } = req.body;
 
-  if (!fullName?.trim()) {
+  if (!name?.trim()) {
     return next(
       new AppError(400, 'Se necesita un nombre para crear una empresa.'),
     );

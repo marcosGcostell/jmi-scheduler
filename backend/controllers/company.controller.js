@@ -60,8 +60,12 @@ export const createCompany = catchAsync(async (req, res, next) => {
 
 export const udpateCompany = catchAsync(async (req, res, next) => {
   // Execute the query
-  const data = (req.user.role = 'admin' ? req.body : { name: req.body?.name });
-  const company = await companyService.updateCompany(req.params.id, data);
+  const data = req.user.role === 'admin' ? req.body : { name: req.body?.name };
+  const company = await companyService.updateCompany(
+    req.params.id,
+    data,
+    req.user.role === 'admin',
+  );
 
   // Send response
   res.status(200).json({
