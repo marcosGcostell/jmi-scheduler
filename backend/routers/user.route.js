@@ -40,4 +40,8 @@ router
   .patch(userController.updateUser)
   .delete(userController.deleteUser);
 
+router
+  .route('/:id/password')
+  .patch(appValidators.validateNewPassword, authController.updateUserPassword);
+
 export default router;

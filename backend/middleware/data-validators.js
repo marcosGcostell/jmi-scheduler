@@ -1,3 +1,6 @@
+import catchAsync from '../utils/catch-async.js';
+import AppError from '../utils/app-error.js';
+
 export const validateDataForCompany = catchAsync(async (req, res, next) => {
   const { name } = req.body;
 
