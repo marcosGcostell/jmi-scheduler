@@ -42,11 +42,7 @@ export const getWorker = async id => {
 export const getCompanyWorkers = async (companyId, onlyActive) => {
   const { rows } = await pool().query(
     `
-    SELECT w.id, w.full_name, w.active,
-      json_build_object(
-        'id', c.id,
-        'name', c.name
-      ) AS company,
+    SELECT w.id, w.full_name, w.active, c.name AS company
     FROM workers w
     INNER JOIN companies c ON w.company_id = c.id
     WHERE w.company_id = $1
@@ -66,11 +62,7 @@ export const getCompanyWorkersWithStatus = async (
 ) => {
   const { rows } = await pool().query(
     `
-    SELECT w.id, w.full_name, w.active,
-      json_build_object(
-        'id', c.id,
-        'name', c.name
-      ) AS company,
+    SELECT w.id, w.full_name, w.active, c.name AS company
     FROM workers w
     INNER JOIN companies c ON w.company_id = c.id
     LEFT JOIN vacations v
@@ -92,9 +84,10 @@ export const getCompanyWorkersWithStatus = async (
 export const findWorker = async (companyId, fullName) => {
   const { rows } = await pool().query(
     `
-    SELECT id, full_name, active
-    FROM workers
-    WHERE company_id = $1 AND full_name = $2
+    SELECT w.id, w.full_name, w.active, c.name AS company
+    FROM workers w
+    INNER JOIN companies c ON w.company_id = c.id
+    WHERE w.company_id = $1 AND w.full_name = $2
     `,
     [companyId, fullName],
   );
