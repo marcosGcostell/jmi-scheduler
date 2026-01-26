@@ -46,31 +46,52 @@ export const getWorkerVacations = async workerId => {
 };
 
 export const createVacation = async data => {
-  const { workerId, startDate, endDate } = data;
+  try {
+    const { workerId, startDate, endDate } = data;
 
-  const { rows } = await pool().query(
-    `
+    const { rows } = await pool().query(
+      `
     INSERT INTO vacations (worker_id, start_date, end_date)
     VALUES ($1, $2, $3)
     RETURNING id, worker_id, start_date, end_date
   `,
-    [workerId, startDate, endDate],
-  );
+      [workerId, startDate, endDate],
+    );
 
-  return rows[0];
+    return rows[0];
+  } catch (err) {
+    throw err;
+  }
 };
 
 export const updateVacation = async (id, data) => {
-  const { workerId, startDate, endDate } = data;
+  try {
+    const { workerId, startDate, endDate } = data;
 
-  const { rows } = await pool().query(
-    `
+    const { rows } = await pool().query(
+      `
     UPDATE vacations
     SET worker_id = $1, start_date = $2, end_date = $3
     WHERE id = $4
     RETURNING id, name, is_main, active
   `,
-    [workerId, startDate, endDate, id],
+      [workerId, startDate, endDate, id],
+    );
+
+    return rows[0];
+  } catch (err) {
+    return err;
+  }
+};
+
+export const deleteVacation = async id => {
+  const { rows } = await pool().query(
+    `
+    DELETE 
+    FROM vacations
+    WHERE id = $1
+  `,
+    [id],
   );
 
   return rows[0];

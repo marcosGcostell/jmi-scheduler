@@ -1,4 +1,5 @@
 import * as Worker from '../models/worker.model.js';
+import * as Vacation from '../models/vacation.model.js';
 import AppError from '../utils/app-error.js';
 
 export const getAllWorkers = async onlyActive => {
@@ -21,6 +22,10 @@ export const getCompanyWorkers = async companyId => {
   }
 
   return workers;
+};
+
+export const getWorkerVacations = async id => {
+  return Vacation.getWorkerVacations(id);
 };
 
 export const createWorker = async data => {

@@ -1,6 +1,8 @@
 
 -- Extension to use gen_random_uuid()
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+-- And to use GiST
+CREATE EXTENSION IF NOT EXISTS btree_gist;
 
 -- DATABASE TABLES
 --
@@ -93,6 +95,12 @@ CREATE TABLE vacations (
   created_at TIMESTAMPTZ DEFAULT now(),
 
   CHECK (end_date >= start_date)
+
+  CONSTRAINT no_overlapping_vacations
+    EXCLUDE USING gist (
+      worker_id WITH =,
+      daterange(start_date, end_date, '[]') WITH &&
+    )
 );
 
 CREATE TABLE sick_leaves (
@@ -106,6 +114,16 @@ CREATE TABLE sick_leaves (
   created_at TIMESTAMPTZ DEFAULT now(),
 
   CHECK (end_date >= start_date)
+
+  CONSTRAINT no_overlapping_sick_leaves
+    EXCLUDE USING gist (
+      worker_id WITH =,
+      daterange(
+        start_date,
+        COALESCE(end_date, 'infinity'::date),
+        '[]'
+      ) WITH &&
+    )
 );
 
 -- FUNCTIONS
