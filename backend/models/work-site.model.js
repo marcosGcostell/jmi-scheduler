@@ -162,23 +162,24 @@ export const updateWorkSite = async (id, data, userIds) => {
       [name, code, startDate, endDate, id],
     );
 
-    // Delete all previous asigned users to this worksite
-    await client.query(
-      `
-    DELETE
-    FROM user_work_sites
-    WHERE work_site_id = $1;
-  `,
-      [id],
-    );
+    if (userIds !== undefined && userIds !== null) {
+      // Delete all previous asigned users to this worksite
+      await client.query(
+        `
+        DELETE
+        FROM user_work_sites
+        WHERE work_site_id = $1;
+        `,
+        [id],
+      );
 
-    // Reasign the new list
-    if (userIds?.length) {
-      await _assignUsers(client, rows[0].id, userIds);
+      // Reasign the new list
+      if (userIds?.length) {
+        await _assignUsers(client, rows[0].id, userIds);
+      }
     }
 
     await client.query('COMMIT');
-
     return rows[0];
   } catch (err) {
     await client.query('ROLLBACK');

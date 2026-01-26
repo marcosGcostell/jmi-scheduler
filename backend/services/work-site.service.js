@@ -24,8 +24,9 @@ export const getMyWorkSites = async (userId, onlyActive) => {
   return workSites;
 };
 
-export const createWorkSite = async (data, userIds) => {
-  const { name, code, startDate } = data;
+export const createWorkSite = async data => {
+  const { name, code, userIds } = data;
+  const startDate = data.startDate ? new Date(data.startDate) : NULL;
 
   const WorkSiteAlreadyExist = await WorkSite.getWorkSiteByName(code?.trim());
   if (WorkSiteAlreadyExist?.id) {
@@ -51,8 +52,10 @@ export const createWorkSite = async (data, userIds) => {
   }
 };
 
-export const updateWorkSite = async (id, data, userIds) => {
-  const { name, code, startDate, endDate } = data;
+export const updateWorkSite = async (id, data) => {
+  const { name, code, userIds } = data;
+  const startDate = data.startDate ? new Date(data.startDate) : NULL;
+  const endDate = data.endDate ? new Date(data.endDate) : NULL;
 
   const workSite = await WorkSite.getWorkSite(id);
   if (!workSite) {
@@ -69,12 +72,12 @@ export const updateWorkSite = async (id, data, userIds) => {
   const newData = {
     name: name?.trim() || workSite.name,
     code: code?.trim() || workSite.code,
-    startDate: startDate || workSite.start_date,
-    endDate: endDate || workSite.end_date,
+    startDate: startDate ?? workSite.start_date ?? NULL,
+    endDate: endDate ?? workSite.end_date ?? NULL,
   };
 
   try {
-    return WorkSite.updateWorkSite(id, newData);
+    return WorkSite.updateWorkSite(id, newData, userIds);
   } catch (err) {
     if (err.code === '23503') {
       throw new AppError(

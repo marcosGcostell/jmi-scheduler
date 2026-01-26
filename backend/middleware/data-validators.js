@@ -39,7 +39,7 @@ export const validateDataForWorkSites = catchAsync(async (req, res, next) => {
     );
   }
 
-  if (startDate && !validator.validateDate(startDate)) {
+  if (startDate && !validator.validateDate(new Date(startDate))) {
     return next(
       new AppError(
         400,
