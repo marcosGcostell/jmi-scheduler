@@ -25,11 +25,8 @@ export const getWorkersFromCompany = async (id, onlyActive) => {
 };
 
 export const createCompany = async name => {
-  if (!name) {
-    throw new AppError(400, 'Se necesita un nombre para crear una empresa.');
-  }
-
   const companyAlreadyExist = await Company.getCompanyByName(name.trim());
+
   if (companyAlreadyExist?.id) {
     throw new AppError(409, 'Ya hay un empresa registrada con este nombre');
   }
@@ -41,12 +38,19 @@ export const createCompany = async name => {
   return company;
 };
 
-export const updateCompany = async (id, data) => {
+export const updateCompany = async (id, data, isAdmin) => {
   const { name, isMain, active } = data;
 
   const company = await Company.getCompany(id);
   if (!company) {
     throw new AppError(400, 'La empresa no existe.');
+  }
+
+  if (company.is_main && !isAdmin) {
+    throw new AppError(
+      403,
+      'No tiene permiso para modificar la empresa principal.',
+    );
   }
 
   const newData = {
