@@ -44,7 +44,10 @@ export const createVacation = catchAsync(async (req, res, next) => {
 
 export const updateVacation = catchAsync(async (req, res, next) => {
   // Execute the query
-  const vacation = await vacationService.updateVacation(req.params.id, data);
+  const vacation = await vacationService.updateVacation(
+    req.params.id,
+    req.body,
+  );
 
   // Send response
   res.status(200).json({

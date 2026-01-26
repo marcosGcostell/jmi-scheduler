@@ -73,14 +73,14 @@ export const updateVacation = async (id, data) => {
     UPDATE vacations
     SET worker_id = $1, start_date = $2, end_date = $3
     WHERE id = $4
-    RETURNING id, name, is_main, active
+    RETURNING id, worker_id, start_date, end_date
   `,
       [workerId, startDate, endDate, id],
     );
 
     return rows[0];
   } catch (err) {
-    return err;
+    throw err;
   }
 };
 
