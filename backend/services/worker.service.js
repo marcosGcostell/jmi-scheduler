@@ -15,17 +15,14 @@ export const getWorker = async id => {
   return worker;
 };
 
-export const getCompanyWorkers = async companyId => {
-  const workers = await Worker.getCompanyWorkers(companyId);
-  if (!workers.length) {
-    throw new AppError(400, 'La empresa no tiene trabajadores.');
+export const getWorkerVacations = async id => {
+  const vacations = await Vacation.getWorkerVacations(id);
+
+  if (!vacations) {
+    throw new AppError(400, 'Este trabajador no tiene registradas vacaciones.');
   }
 
-  return workers;
-};
-
-export const getWorkerVacations = async id => {
-  return Vacation.getWorkerVacations(id);
+  return vacations;
 };
 
 export const createWorker = async data => {
