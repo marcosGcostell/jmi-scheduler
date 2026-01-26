@@ -47,11 +47,12 @@ CREATE TABLE work_sites (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
   name TEXT NOT NULL,
-  code TEXT UNIQUE,
+  code TEXT UNIQUE NOT NULL,
 
-  is_open BOOLEAN DEFAULT TRUE,
-  star_date DATE,
+  start_date DATE,
   end_date DATE,
+
+  is_open BOOLEAN NOT NULL DEFAULT TRUE,
 
   created_at TIMESTAMPTZ DEFAULT now()
 );
@@ -86,7 +87,7 @@ CREATE TABLE vacations (
 
   worker_id UUID NOT NULL REFERENCES workers(id),
 
-  star_date DATE NOT NULL,
+  start_date DATE NOT NULL,
   end_date DATE NOT NULL,
 
   created_at TIMESTAMPTZ DEFAULT now(),
@@ -99,13 +100,30 @@ CREATE TABLE sick_leaves (
 
   worker_id UUID NOT NULL REFERENCES workers(id),
 
-  star_date DATE NOT NULL,
-  end_date DATE NOT NULL,
+  start_date DATE NOT NULL,
+  end_date DATE,
 
   created_at TIMESTAMPTZ DEFAULT now(),
 
   CHECK (end_date >= star_date)
 );
+
+-- FUNCTIONS
+CREATE OR REPLACE FUNCTION set_work_site_is_open()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.is_open :=
+    NEW.end_date IS NULL OR NEW.end_date > CURRENT_DATE;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- TRIGGERS
+CREATE TRIGGER trg_set_is_open
+BEFORE INSERT OR UPDATE OF end_date
+ON work_sites
+FOR EACH ROW
+EXECUTE FUNCTION set_work_site_is_open();
 
 -- INDEXES
 -- Search for workers and dates
@@ -114,7 +132,8 @@ CREATE INDEX idx_time_entries_worker_start
 ON time_entries(worker_id, start_time);
 
 -- Search for work sites
-CREATE INDEX idx_time_entries_work_site ON time_entries(work_site_id);
+CREATE INDEX idx_time_entries_work_site ON  time_entries(work_site_id);
+CREATE INDEX idx_work_sites_is_open ON work_sites (is_open);
 
 -- Availability
 CREATE INDEX idx_vacations_worker ON vacations(worker_id);
