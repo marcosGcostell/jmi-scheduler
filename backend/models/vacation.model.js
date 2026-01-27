@@ -36,16 +36,21 @@ export const getVacation = async id => {
   return rows[0];
 };
 
-export const getWorkerVacations = async workerId => {
-  const { rows } = await pool().query(
-    `
+export const getWorkerVacations = async (workerId, period) => {
+  const periodCondition = period
+    ? ` AND v.start_date <= $2 AND (v.end_date IS NULL OR v.end_date >= $3)`
+    : '';
+  const values = [workerId];
+  if (period) values.push(period.to, period.from);
+
+  const sql = `
     SELECT v.id, v.worker_id, w.full_name AS full_name, v.start_date, v.end_date
     FROM vacations v
     INNER JOIN workers w ON v.worker_id = w.id
-    WHERE v.worker_id = $1
-    `,
-    [workerId],
-  );
+    WHERE v.worker_id = $1${periodCondition}
+    `;
+
+  const { rows } = await pool().query(sql, values);
 
   return rows;
 };
