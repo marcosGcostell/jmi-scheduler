@@ -2,22 +2,17 @@ import { getPool } from '../db/pool.js';
 
 const pool = () => getPool();
 
-export const getAllVacations = async (onlyActive, period) => {
-  const periodCondition = period
-    ? ` AND v.start_date <= $2 AND (v.end_date IS NULL OR v.end_date >= $3)`
-    : '';
-  const values = [onlyActive];
-  if (period) values.push(period.to, period.from);
-
-  const sql = `
+export const getAllVacations = async onlyActive => {
+  const { rows } = await pool().query(
+    `
     SELECT v.id, v.worker_id, w.full_name AS full_name, v.start_date, v.end_date
     FROM vacations v
     INNER JOIN workers w ON v.worker_id = w.id
-    WHERE ($1::BOOLEAN IS NULL OR w.active = $1)${periodCondition}
+    WHERE ($1::BOOLEAN IS NULL OR w.active = $1)
     ORDER BY v.start_date DESC
-    `;
-
-  const { rows } = await pool().query(sql, values);
+    `,
+    [onlyActive],
+  );
 
   return rows;
 };
