@@ -4,7 +4,10 @@ import catchAsync from '../utils/catch-async.js';
 
 export const getAllVacations = catchAsync(async (req, res, next) => {
   // Execute the query
-  const vacations = await vacationService.getAllVacations(req.active);
+  const vacations = await vacationService.getAllVacations(
+    req.active,
+    req.period,
+  );
 
   // Send response
   res.status(200).json({

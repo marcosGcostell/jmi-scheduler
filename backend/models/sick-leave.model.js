@@ -2,19 +2,19 @@ import { getPool } from '../db/pool.js';
 
 const pool = () => getPool();
 
-export const getAllVacations = async (onlyActive, period) => {
+export const getAllSickLeaves = async (onlyActive, period) => {
   const periodCondition = period
-    ? ` AND v.start_date <= $2 AND (v.end_date IS NULL OR v.end_date >= $3)`
+    ? ` AND s.start_date <= $2 AND (s.end_date IS NULL OR s.end_date >= $3)`
     : '';
   const values = [onlyActive];
   if (period) values.push(period.to, period.from);
 
   const sql = `
-    SELECT v.id, v.worker_id, w.full_name AS full_name, v.start_date, v.end_date
-    FROM vacations v
-    INNER JOIN workers w ON v.worker_id = w.id
+    SELECT s.id, s.worker_id, w.full_name AS full_name, s.start_date, s.end_date
+    FROM sick_leaves s
+    INNER JOIN workers w ON s.worker_id = w.id
     WHERE ($1::BOOLEAN IS NULL OR w.active = $1)${periodCondition}
-    ORDER BY v.start_date DESC
+    ORDER BY s.start_date DESC
     `;
 
   const { rows } = await pool().query(sql, values);
@@ -22,13 +22,13 @@ export const getAllVacations = async (onlyActive, period) => {
   return rows;
 };
 
-export const getVacation = async id => {
+export const getSickLeave = async id => {
   const { rows } = await pool().query(
     `
-    SELECT v.id, v.worker_id, w.full_name AS full_name, v.start_date, v.end_date
-    FROM vacations v
-    INNER JOIN workers w ON v.worker_id = w.id
-    WHERE v.id = $1
+    SELECT s.id, s.worker_id, w.full_name AS full_name, s.start_date, s.end_date
+    FROM sick_leaves s
+    INNER JOIN workers w ON s.worker_id = w.id
+    WHERE s.id = $1
     `,
     [id],
   );
@@ -36,18 +36,18 @@ export const getVacation = async id => {
   return rows[0];
 };
 
-export const getWorkerVacations = async (workerId, period) => {
+export const getWorkerSickLeaves = async (workerId, period) => {
   const periodCondition = period
-    ? ` AND v.start_date <= $2 AND (v.end_date IS NULL OR v.end_date >= $3)`
+    ? ` AND s.start_date <= $2 AND (s.end_date IS NULL OR s.end_date >= $3)`
     : '';
   const values = [workerId];
   if (period) values.push(period.to, period.from);
 
   const sql = `
-    SELECT v.id, v.worker_id, w.full_name AS full_name, v.start_date, v.end_date
-    FROM vacations v
-    INNER JOIN workers w ON v.worker_id = w.id
-    WHERE v.worker_id = $1${periodCondition}
+    SELECT s.id, s.worker_id, w.full_name AS full_name, s.start_date, s.end_date
+    FROM sick_leaves s
+    INNER JOIN workers w ON s.worker_id = w.id
+    WHERE s.worker_id = $1${periodCondition}
     `;
 
   const { rows } = await pool().query(sql, values);
@@ -55,13 +55,13 @@ export const getWorkerVacations = async (workerId, period) => {
   return rows;
 };
 
-export const createVacation = async data => {
+export const createSickLeave = async data => {
   try {
     const { workerId, startDate, endDate } = data;
 
     const { rows } = await pool().query(
       `
-    INSERT INTO vacations (worker_id, start_date, end_date)
+    INSERT INTO sick_leaves (worker_id, start_date, end_date)
     VALUES ($1, $2, $3)
     RETURNING id, worker_id, start_date, end_date
   `,
@@ -74,13 +74,13 @@ export const createVacation = async data => {
   }
 };
 
-export const updateVacation = async (id, data) => {
+export const updateSickLeave = async (id, data) => {
   try {
     const { workerId, startDate, endDate } = data;
 
     const { rows } = await pool().query(
       `
-    UPDATE vacations
+    UPDATE sick_leaves
     SET worker_id = $1, start_date = $2, end_date = $3
     WHERE id = $4
     RETURNING id, worker_id, start_date, end_date
@@ -94,11 +94,11 @@ export const updateVacation = async (id, data) => {
   }
 };
 
-export const deleteVacation = async id => {
+export const deleteSickLeave = async id => {
   const { rows } = await pool().query(
     `
     DELETE 
-    FROM vacations
+    FROM sick_leaves
     WHERE id = $1
   `,
     [id],

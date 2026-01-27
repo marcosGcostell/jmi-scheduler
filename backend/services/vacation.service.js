@@ -3,8 +3,8 @@ import * as Worker from '../models/worker.model.js';
 import AppError from '../utils/app-error.js';
 import { validateDate } from '../utils/validators.js';
 
-export const getAllVacations = async onlyActive => {
-  return Vacation.getAllVacations(onlyActive);
+export const getAllVacations = async (onlyActive, period) => {
+  return Vacation.getAllVacations(onlyActive, period);
 };
 
 export const getVacation = async id => {
