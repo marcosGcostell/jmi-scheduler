@@ -64,13 +64,11 @@ export const updateWorkSite = async (id, data) => {
     name: name?.trim() || workSite.name,
     code: code?.trim() || workSite.code,
     startDate: startDate ?? workSite.start_date ?? null,
-    endDate: workSite.end_date ?? null,
+    endDate: endDate ?? workSite.end_date ?? null,
   };
 
   // This allows to set the endDate to null after is set
-  if (data.endDate !== undefined) {
-    newData.endDate = endDate;
-  }
+  if (data.endDate !== null) newData.endDate = null;
 
   try {
     return WorkSite.updateWorkSite(id, newData, userIds);
