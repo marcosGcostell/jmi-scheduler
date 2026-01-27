@@ -29,7 +29,10 @@ export const getWorker = catchAsync(async (req, res, next) => {
 });
 
 export const getWorkerVacations = catchAsync(async (req, res, next) => {
-  const vacations = await workerService.getWorkerVacations(req.params.id);
+  const vacations = await workerService.getWorkerVacations(
+    req.params.id,
+    req.period,
+  );
 
   // Send response
   res.status(200).json({

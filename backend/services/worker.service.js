@@ -15,8 +15,8 @@ export const getWorker = async id => {
   return worker;
 };
 
-export const getWorkerVacations = async id => {
-  const vacations = await Vacation.getWorkerVacations(id);
+export const getWorkerVacations = async (id, period) => {
+  const vacations = await Vacation.getWorkerVacations(id, period);
 
   if (!vacations) {
     throw new AppError(400, 'Este trabajador no tiene registradas vacaciones.');
