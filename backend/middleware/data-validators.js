@@ -3,7 +3,7 @@ import AppError from '../utils/app-error.js';
 import { validateDate } from '../utils/validators.js';
 import { RESOURCE_TYPES } from '../utils/config.js';
 
-const _isInvalidDate = (req, requiredFields) =>
+const _hasInvalidDates = (req, requiredFields) =>
   requiredFields.varNames.reduce((acc, varName, i) => {
     if (requiredFields.varTypes[i] === 'date')
       return (
@@ -12,7 +12,7 @@ const _isInvalidDate = (req, requiredFields) =>
     return acc;
   }, false);
 
-const _isInvalidUUID = (req, requiredFields) => {
+const _hasInvalidUUIDs = (req, requiredFields) => {
   const uuidRegex =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -38,7 +38,7 @@ export const checkRequiredFields = requiredFields => {
       return next(new AppError(400, requiredFields.errorMessage));
     }
 
-    if (_isInvalidDate(req, requiredFields)) {
+    if (_hasInvalidDates(req, requiredFields)) {
       return next(
         new AppError(
           400,
@@ -47,7 +47,7 @@ export const checkRequiredFields = requiredFields => {
       );
     }
 
-    if (_isInvalidUUID(req, requiredFields)) {
+    if (_hasInvalidUUIDs(req, requiredFields)) {
       return next(
         new AppError(
           400,
