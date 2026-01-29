@@ -15,7 +15,7 @@ export const getAllCategories = async () => {
   return rows;
 };
 
-export const getCategoriesFromCompany = async (companyId, plusGlobal) => {
+export const getCompanyCategories = async (companyId, plusGlobal) => {
   const globalCondition = plusGlobal ? 'OR g.company_id = null' : '';
 
   const { rows } = await pool().query(
@@ -39,9 +39,22 @@ export const getCategory = async id => {
     FROM categories g
     INNER JOIN companies c ON g.company_id = c.id
     WHERE g.id = $1
-    ORDER BY g.name ASC
     `,
     [id],
+  );
+
+  return rows[0];
+};
+
+export const findCategory = async (companyId, name) => {
+  const { rows } = await pool().query(
+    `
+    SELECT g.id, g.name, g.company_id, c.name AS company_name
+    FROM categories g
+    INNER JOIN companies c ON g.company_id = c.id
+    WHERE g.company_id = $1 AND g.name = $2
+    `,
+    [companyId, name],
   );
 
   return rows[0];
@@ -66,18 +79,16 @@ export const createCategory = async data => {
   }
 };
 
-export const updateCategory = async (id, data) => {
+export const updateCategory = async (id, name) => {
   try {
-    const { name, companyId } = data;
-
     const { rows } = await pool().query(
       `
     UPDATE categories
-    SET name = $1, company_id = $2
-    WHERE id = $3
-    RETURNING id, name, company_id
+    SET name = $1
+    WHERE id = $2
+    RETURNING id, name
   `,
-      [name, companyId, id],
+      [name, id],
     );
 
     return rows[0];
