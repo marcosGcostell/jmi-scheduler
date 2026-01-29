@@ -1,7 +1,6 @@
 import * as SickLeave from '../models/sick-leave.model.js';
 import * as Resource from '../models/resource.model.js';
 import AppError from '../utils/app-error.js';
-import { validateDate } from '../utils/validators.js';
 
 export const getAllSickLeaves = async (onlyActive, period) => {
   return SickLeave.getAllSickLeaves(onlyActive, period);
@@ -51,13 +50,6 @@ export const updateSickLeave = async (id, data) => {
   const { resourceId } = data;
   const startDate = data.startDate ? new Date(data.startDate) : null;
   const endDate = data.endDate ? new Date(data.endDate) : null;
-
-  if (
-    (startDate && !validateDate(startDate)) ||
-    (endDate && !validateDate(endDate))
-  ) {
-    throw new AppError(400, 'Las fechas no están en el formato correcto.');
-  }
 
   const newData = {
     resourceId: resourceId || sickLeave.resource_id,

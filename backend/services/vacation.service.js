@@ -1,7 +1,6 @@
 import * as Vacation from '../models/vacation.model.js';
 import * as Resource from '../models/resource.model.js';
 import AppError from '../utils/app-error.js';
-import { validateDate } from '../utils/validators.js';
 
 export const getAllVacations = async (onlyActive, period) => {
   return Vacation.getAllVacations(onlyActive, period);
@@ -54,13 +53,6 @@ export const updateVacation = async (id, data) => {
   const { resourceId } = data;
   const startDate = data.startDate ? new Date(data.startDate) : null;
   const endDate = data.endDate ? new Date(data.endDate) : null;
-
-  if (
-    (startDate && !validateDate(startDate)) ||
-    (endDate && !validateDate(endDate))
-  ) {
-    throw new AppError(400, 'Las fechas no están en el formato correcto.');
-  }
 
   const newData = {
     resourceId: resourceId || vacation.resource_id,

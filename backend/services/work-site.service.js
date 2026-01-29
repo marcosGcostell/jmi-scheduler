@@ -1,6 +1,5 @@
 import * as WorkSite from '../models/work-site.model.js';
 import AppError from '../utils/app-error.js';
-import { validateDate } from '../utils/validators.js';
 
 export const getAllWorkSites = async onlyActive => {
   return WorkSite.getAllWorkSites(onlyActive);
@@ -51,13 +50,6 @@ export const updateWorkSite = async (id, data) => {
   const workSite = await WorkSite.getWorkSite(id);
   if (!workSite) {
     throw new AppError(400, 'La obra no existe.');
-  }
-
-  if (
-    (startDate && !validateDate(startDate)) ||
-    (endDate && !validateDate(endDate))
-  ) {
-    throw new AppError(400, 'Las fechas no están en el formato correcto.');
   }
 
   const newData = {
