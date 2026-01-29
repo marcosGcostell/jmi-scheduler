@@ -2,6 +2,7 @@ import express from 'express';
 
 import * as authController from '../controllers/auth.controller.js';
 import * as companyController from '../controllers/company.controller.js';
+import * as scheduleController from '../controllers/schedule.controller.js';
 import {
   checkRecordFields,
   checkFieldsForUpdate,
@@ -33,6 +34,10 @@ router
 router
   .route('/:id/categories')
   .get(filterQuery, companyController.getCompanyCategories);
+
+router
+  .route('/:id/schedules')
+  .get(filterQuery, scheduleController.getCompanySchedules);
 
 // Routes for admins only
 router.use(authController.restrictTo('admin'));

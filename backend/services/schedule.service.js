@@ -1,4 +1,4 @@
-import * as Schedule from '../models/schedule.model.js';
+import * as Schedule from '../models/schedules.model.js';
 import * as Company from '../models/company.model.js';
 import AppError from '../utils/app-error.js';
 
@@ -18,7 +18,7 @@ const _checkCompany = async companyId => {
 };
 
 export const getAllSchedules = async (onlyActive, period) => {
-  return Schedule.getAllschedule(onlyActive, period);
+  return Schedule.getAllSchedules(onlyActive, period);
 };
 
 export const getSchedule = async id => {

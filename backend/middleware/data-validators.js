@@ -7,6 +7,7 @@ const validators = {
   text: data => typeof data === 'string' && data.trim(),
   date: data => validateDate(new Date(data)),
   id: data => UUIDREGEX.test(data),
+  int: data => !isNaN(data),
   resource: data =>
     typeof data === 'string' &&
     data.trim() &&
