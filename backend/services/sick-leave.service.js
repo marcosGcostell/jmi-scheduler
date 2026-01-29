@@ -1,7 +1,6 @@
 import * as SickLeave from '../models/sick-leave.model.js';
 import * as Resource from '../models/resource.model.js';
 import AppError from '../utils/app-error.js';
-import { validateDate } from '../utils/validators.js';
 
 export const getAllSickLeaves = async (onlyActive, period) => {
   return SickLeave.getAllSickLeaves(onlyActive, period);

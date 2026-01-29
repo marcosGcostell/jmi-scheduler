@@ -1,7 +1,6 @@
 import * as Vacation from '../models/vacation.model.js';
 import * as Resource from '../models/resource.model.js';
 import AppError from '../utils/app-error.js';
-import { validateDate } from '../utils/validators.js';
 
 export const getAllVacations = async (onlyActive, period) => {
   return Vacation.getAllVacations(onlyActive, period);

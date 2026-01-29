@@ -1,6 +1,5 @@
 import * as WorkSite from '../models/work-site.model.js';
 import AppError from '../utils/app-error.js';
-import { validateDate } from '../utils/validators.js';
 
 export const getAllWorkSites = async onlyActive => {
   return WorkSite.getAllWorkSites(onlyActive);
