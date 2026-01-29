@@ -1,6 +1,6 @@
-import * as WorkRule from '../models/workRules.model.js';
-import { getCompany } from '../services/company.service.js';
-import { getWorkSite } from '../services/work-site.service.js';
+import * as WorkRule from '../models/work-rule.model.js';
+import { getCompany } from './company.service.js';
+import { getWorkSite } from './work-site.service.js';
 import AppError from '../utils/app-error.js';
 
 export const getAllWorkRules = async (onlyActive, period) => {

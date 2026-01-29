@@ -1,6 +1,6 @@
 import catchAsync from '../utils/catch-async.js';
 import AppError from '../utils/app-error.js';
-import { validateDate } from '../utils/validators.js';
+import validateDate from '../domain/validators/validate-date.js';
 import { RESOURCE_TYPES, UUID_REGEX, TIME_REGEX } from '../utils/config.js';
 
 const validators = {
