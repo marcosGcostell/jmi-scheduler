@@ -39,6 +39,7 @@ export const getCompanyResources = async (id, onlyActive, date) => {
       throw new AppError(400, 'La empresa no tiene trabajadores.');
     }
 
+    await client.query('COMMIT');
     return resources;
   } catch (err) {
     await client.query('ROLLBACK');
@@ -62,47 +63,88 @@ export const getCompanyCategories = async (id, plusGlobal) => {
 };
 
 export const createCompany = async name => {
-  const companyAlreadyExist = await Company.getCompanyByName(name.trim());
+  const client = await getPool().connect();
 
-  if (companyAlreadyExist?.id) {
-    throw new AppError(409, 'Ya hay un empresa registrada con este nombre');
+  try {
+    await client.query('BEGIN');
+    const companyAlreadyExist = await Company.getCompanyByName(
+      name.trim(),
+      client,
+    );
+
+    if (companyAlreadyExist?.id) {
+      throw new AppError(409, 'Ya hay un empresa registrada con este nombre');
+    }
+
+    const company = await Company.createCompany({
+      name: name.trim(),
+      client,
+    });
+
+    await client.query('COMMIT');
+    return company;
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
   }
-
-  const company = await Company.createCompany({
-    name: name.trim(),
-  });
-
-  return company;
 };
 
 export const updateCompany = async (id, data, isAdmin) => {
+  const client = await getPool().connect();
   const { name, isMain, active } = data;
 
-  const company = await companyExists(id);
+  try {
+    await client.query('BEGIN');
+    const company = await companyExists(id, client);
 
-  if (company.is_main && !isAdmin) {
-    throw new AppError(
-      403,
-      'No tiene permiso para modificar la empresa principal.',
-    );
+    if (company.is_main && !isAdmin) {
+      throw new AppError(
+        403,
+        'No tiene permiso para modificar la empresa principal.',
+      );
+    }
+
+    const newData = {
+      name: name?.trim() || company.name,
+      isMain: isMain ?? company.is_main ?? false,
+      active: active ?? company.active ?? true,
+    };
+
+    const result = await Company.updateCompany(id, newData, client);
+
+    await client.query('COMMIT');
+    return result;
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
   }
-
-  const newData = {
-    name: name?.trim() || company.name,
-    isMain: isMain ?? company.is_main ?? false,
-    active: active ?? company.active ?? true,
-  };
-
-  return Company.updateCompany(id, newData);
 };
 
 export const deleteCompany = async id => {
-  const company = await companyExists(id);
-  if (!company?.active)
-    throw new AppError(400, 'La empresa ya está deshabilitada.');
+  const client = await getPool().connect();
 
-  if (company.is_main)
-    throw new AppError(400, 'No se puede deshabilitar la empresa principal.');
+  try {
+    await client.query('BEGIN');
+    const company = await companyExists(id, client);
 
-  return Company.disableCompany(company.id);
+    if (!company?.active)
+      throw new AppError(400, 'La empresa ya está deshabilitada.');
+
+    if (company.is_main)
+      throw new AppError(400, 'No se puede deshabilitar la empresa principal.');
+
+    const result = await Company.disableCompany(company.id);
+
+    await client.query('COMMIT');
+    return result;
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
 };

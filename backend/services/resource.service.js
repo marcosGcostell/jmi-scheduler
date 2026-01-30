@@ -2,6 +2,7 @@ import * as Resource from '../models/resource.model.js';
 import * as Vacation from '../models/vacation.model.js';
 import * as SickLeave from '../models/sick-leave.model.js';
 import resourceExists from '../domain/assertions/resourceExists.js';
+import { getPool } from '../db/pool.js';
 import AppError from '../utils/app-error.js';
 
 export const getAllResources = async onlyActive => {
@@ -33,57 +34,96 @@ export const getWorkerSickLeaves = async (id, period) => {
 };
 
 export const createResource = async data => {
+  const client = await getPool().connect();
   const { companyId, categoryId, name, resourceType } = data;
 
-  const resourceAlreadyExist = await Resource.findResource(
-    companyId,
-    name.trim(),
-  );
-  if (resourceAlreadyExist)
-    throw new AppError(
-      409,
-      'Ya hay un trabajador o equipo registrado con este nombre en esta empresa.',
+  try {
+    await client.query('BEGIN');
+    const resourceAlreadyExist = await Resource.findResource(
+      companyId,
+      name.trim(),
+      client,
+    );
+    if (resourceAlreadyExist)
+      throw new AppError(
+        400,
+        'Ya hay un trabajador o equipo registrado con este nombre en esta empresa.',
+      );
+
+    const resource = await Resource.createResource(
+      {
+        companyId,
+        categoryId,
+        name: name.trim(),
+        resourceType: resourceType || 'person',
+      },
+      client,
     );
 
-  const resource = await Resource.createResource({
-    companyId,
-    categoryId,
-    name: name.trim(),
-    resourceType: resourceType || 'person',
-  });
-
-  return resource;
+    await client.query('COMMIT');
+    return resource;
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
 };
 
 export const updateResource = async (id, data, userRole) => {
-  console.log(id, data, userRole);
+  const client = await getPool().connect();
   const { name, userId, companyId, categoryId, resourceType, active } = data;
 
-  const resource = await resourceExists(id);
+  try {
+    await client.query('BEGIN');
+    const resource = await resourceExists(id, client);
 
-  // Users can only change the name, type and categoy fields
-  const newData = {
-    name: name?.trim() || resource.name,
-    userId: resource.user_id,
-    companyId: resource.company.id,
-    categoryId: categoryId || resource.category.id,
-    resourceType: resourceType || resource.resource_type,
-    active: resource.active,
-  };
+    // Users can only change the name, type and categoy fields
+    const newData = {
+      name: name?.trim() || resource.name,
+      userId: resource.user_id,
+      companyId: resource.company.id,
+      categoryId: categoryId || resource.category.id,
+      resourceType: resourceType || resource.resource_type,
+      active: resource.active,
+    };
 
-  if (userRole === 'admin') {
-    newData.userId = userId ?? resource.user_id;
-    newData.companyId = companyId || resource.company.id;
-    newData.active = active ?? resource.active ?? true;
+    if (userRole === 'admin') {
+      newData.userId = userId ?? resource.user_id;
+      newData.companyId = companyId || resource.company.id;
+      newData.active = active ?? resource.active ?? true;
+    }
+
+    const result = await Resource.updateResource(id, newData, client);
+
+    await client.query('COMMIT');
+    return result;
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
   }
-
-  return Resource.updateResource(id, newData);
 };
 
 export const deleteResource = async id => {
-  const resource = await resourceExists(id);
-  if (!resource?.active)
-    throw new AppError(400, 'El trabajador o equipo ya está deshabilitado.');
+  const client = await getPool().connect();
 
-  return Resource.disableResource(resource.id);
+  try {
+    await client.query('BEGIN');
+    const resource = await resourceExists(id, client);
+
+    if (!resource?.active)
+      throw new AppError(400, 'El trabajador o equipo ya está deshabilitado.');
+
+    const result = await Resource.disableResource(resource.id, client);
+
+    await client.query('COMMIT');
+    return result;
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
 };
