@@ -17,12 +17,14 @@ export const createSickLeave = async data => {
 
   try {
     await client.query('BEGIN');
-    const resource = await resourceExists(data.resourceId, client);
+    await resourceExists(data.resourceId, client);
+
+    const { resourceId, startDate, endDate } = data;
 
     const newData = {
-      resourceId: data.resourceId,
-      startDate: new Date(data.startDate),
-      endDate: data.endDate ? new Date(data.endDate) : null,
+      resourceId,
+      startDate,
+      endDate: endDate ?? null,
     };
 
     const sickLeave = await SickLeave.createSickLeave(newData, client);
@@ -52,9 +54,7 @@ export const updateSickLeave = async (id, data) => {
     await client.query('BEGIN');
     const sickLeave = await sickLeaveExists(id, client);
 
-    const { resourceId } = data;
-    const startDate = data.startDate ? new Date(data.startDate) : null;
-    const endDate = data.endDate ? new Date(data.endDate) : null;
+    const { resourceId, startDate, endDate } = data;
 
     const newData = {
       resourceId: resourceId || sickLeave.resource_id,
@@ -63,7 +63,7 @@ export const updateSickLeave = async (id, data) => {
     };
 
     // Allows to set end_date to null
-    if (data.endDate === null) newData.endDate = null;
+    if (endDate === null) newData.endDate = null;
 
     const result = await SickLeave.updateSickLeave(id, newData, client);
 

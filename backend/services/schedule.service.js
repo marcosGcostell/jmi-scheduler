@@ -45,8 +45,8 @@ export const createSchedule = async data => {
       startTime,
       endTime,
       dayCorrection,
-      validFrom: new Date(validFrom),
-      validTo: validTo ? new Date(validTo) : null,
+      validFrom,
+      validTo: validTo ?? null,
     };
 
     const schedule = await Schedule.createSchedule(newData, client);
@@ -79,11 +79,9 @@ export const updateSchedule = async (id, data) => {
     await client.query('BEGIN');
     const schedule = await scheduleExists(id, client);
 
-    const { companyId, startTime, endTime, dayCorrection } = data;
+    const { companyId, startTime, endTime, dayCorrection, validFrom, validTo } =
+      data;
     if (companyId) await companyExists(companyId, true, client);
-
-    const validFrom = data.validFrom ? new Date(data.validFrom) : null;
-    const validTo = data.validTo ? new Date(data.validTo) : null;
 
     const newData = {
       companyId: companyId || schedule.company.id,
@@ -93,6 +91,9 @@ export const updateSchedule = async (id, data) => {
       validFrom: validFrom || schedule.valid_from,
       validTo: validTo || schedule.valid_to,
     };
+
+    // Allows you to change validTo to null
+    if (validTo === null) newData.validTo = null;
 
     const result = await Schedule.updateSchedule(id, newData, client);
 

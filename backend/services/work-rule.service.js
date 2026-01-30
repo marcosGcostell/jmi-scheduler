@@ -65,8 +65,8 @@ export const createWorkRule = async data => {
       workSiteId,
       companyId,
       dayCorrection,
-      validFrom: new Date(validFrom),
-      validTo: validTo ? new Date(validTo) : null,
+      validFrom,
+      validTo: validTo ?? null,
     };
 
     const workRule = await WorkRule.createWorkRule(newData, client);
@@ -101,9 +101,7 @@ export const updateWorkRule = async (id, data) => {
 
     // Nobody can change the work-site or the company in a work rule
     // Probably it will break the results for existing data
-    const { dayCorrection } = data;
-    const validFrom = data.validFrom ? new Date(data.validFrom) : null;
-    const validTo = data.validTo ? new Date(data.validTo) : null;
+    const { dayCorrection, validFrom, validTo } = data;
 
     const newData = {
       workSiteId: workRule.work_site.id,
@@ -112,6 +110,9 @@ export const updateWorkRule = async (id, data) => {
       validFrom: validFrom || workRule.valid_from,
       validTo: validTo || workRule.valid_to,
     };
+
+    // Allows you to change validTo to null
+    if (validTo === null) newData.validTo = null;
 
     const result = await WorkRule.updateWorkRule(id, newData, client);
 

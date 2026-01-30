@@ -19,13 +19,7 @@ export const createVacation = async data => {
     await client.query('BEGIN');
     await resourceExists(data.resourceId, client);
 
-    const newData = {
-      resourceId: data.resourceId,
-      startDate: new Date(data.startDate),
-      endDate: new Date(data.endDate),
-    };
-
-    const vacation = await Vacation.createVacation(newData, client);
+    const vacation = await Vacation.createVacation(data, client);
 
     await client.query('COMMIT');
     return vacation;
@@ -55,9 +49,7 @@ export const updateVacation = async (id, data) => {
     await client.query('BEGIN');
     const vacation = await vacationExists(id, client);
 
-    const { resourceId } = data;
-    const startDate = data.startDate ? new Date(data.startDate) : null;
-    const endDate = data.endDate ? new Date(data.endDate) : null;
+    const { resourceId, startDate, endDate } = data;
 
     const newData = {
       resourceId: resourceId || vacation.resource_id,
