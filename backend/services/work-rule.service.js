@@ -19,6 +19,20 @@ export const resolveGetWorkRules = async (workSiteId, companyId, period) => {
   return WorkRule.getConditionedWorkRules(workSiteId, companyId, period);
 };
 
+export const resolvePostWorkRules = async (workSiteId, companyId, data) => {
+  if (!workSiteId || !companyId) {
+    throw new AppError(
+      400,
+      'Se necesitan los datos de la obra y la empresa para crear una regla.',
+    );
+  }
+
+  data.workSiteId = workSiteId;
+  data.companyId = companyId;
+
+  return createWorkRule(data);
+};
+
 export const createWorkRule = async data => {
   const { workSiteId, companyId, dayCorrection, validFrom, validTo } = data;
 
@@ -38,7 +52,7 @@ export const createWorkRule = async data => {
   } catch (err) {
     if (err.error.code === '23P01') {
       throw new AppError(
-        409,
+        400,
         'La empresa ya tiene una regla de configuración en ese periodo y esta obra',
       );
     }

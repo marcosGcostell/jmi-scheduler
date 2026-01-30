@@ -48,7 +48,8 @@ router.use(authController.protect);
 
 router
   .route('/resolve')
-  .get(filterQuery, filterWorkRuleQuery, workRuleController.resolveGetWorkRule);
+  .get(filterQuery, filterWorkRuleQuery, workRuleController.resolveGetWorkRule)
+  .post(filterWorkRuleQuery, workRuleController.resolvePostWorkRule);
 
 router.route('/:id').get(workRuleController.getWorkRule);
 
