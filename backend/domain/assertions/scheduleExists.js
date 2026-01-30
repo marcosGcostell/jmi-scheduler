@@ -1,6 +1,6 @@
 import * as Schedule from '../../models/schedule.model.js';
 
-const scheduleExists = async id => {
+export default async (id, client = undefined) => {
   const schedule = await Schedule.getSchedule(id);
   if (!schedule) {
     throw new AppError(
@@ -11,5 +11,3 @@ const scheduleExists = async id => {
 
   return schedule;
 };
-
-export default scheduleExists;

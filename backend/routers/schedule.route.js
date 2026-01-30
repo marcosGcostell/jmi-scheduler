@@ -2,10 +2,7 @@ import express from 'express';
 
 import * as authController from '../controllers/auth.controller.js';
 import * as scheduleController from '../controllers/schedule.controller.js';
-import {
-  checkRecordFields,
-  checkFieldsForUpdate,
-} from '../middleware/data-validators.js';
+import { checkRecordFields } from '../middleware/data-validators.js';
 import filterQuery from '../middleware/filter-query.js';
 
 const router = express.Router();
@@ -63,7 +60,10 @@ router
 
 router
   .route('/:id')
-  .patch(checkFieldsForUpdate(recordFields), scheduleController.updateSchedule)
+  .patch(
+    checkRecordFields(recordFields, { exclude: ['all'] }),
+    scheduleController.updateSchedule,
+  )
   .delete(scheduleController.deleteSchedule);
 
 export default router;

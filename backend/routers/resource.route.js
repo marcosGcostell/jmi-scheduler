@@ -2,10 +2,7 @@ import express from 'express';
 
 import * as authController from '../controllers/auth.controller.js';
 import * as resourceController from '../controllers/resource.controller.js';
-import {
-  checkRecordFields,
-  checkFieldsForUpdate,
-} from '../middleware/data-validators.js';
+import { checkRecordFields } from '../middleware/data-validators.js';
 import filterQuery from '../middleware/filter-query.js';
 
 const router = express.Router();
@@ -47,7 +44,10 @@ router
 router
   .route('/:id')
   .get(resourceController.getResource)
-  .patch(checkFieldsForUpdate(recordFields), resourceController.updateResource);
+  .patch(
+    checkRecordFields(recordFields, { exclude: ['all'] }),
+    resourceController.updateResource,
+  );
 
 router
   .route('/:id/vacations')

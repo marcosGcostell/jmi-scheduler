@@ -34,7 +34,7 @@ export const getWorkRule = catchAsync(async (req, res, next) => {
 
 export const resolveGetWorkRule = catchAsync(async (req, res, next) => {
   // Execute the query
-  const workRule = await WorkRuleService.resolveGetWorkRules(
+  const workRules = await WorkRuleService.resolveGetWorkRules(
     req.workSiteId,
     req.companyId,
     req.period,
@@ -43,52 +43,38 @@ export const resolveGetWorkRule = catchAsync(async (req, res, next) => {
   // Send response
   res.status(200).json({
     status: 'success',
-    data: {
-      workRule,
-    },
-  });
-});
-
-export const getWorkSiteWorkRules = catchAsync(async (req, res, next) => {
-  // Execute the query
-  const workRules = await WorkRuleService.getWorkSiteWorkRules(
-    req.params.id,
-    req.period,
-  );
-
-  // Send response
-  res.status(200).json({
-    status: 'success',
-    results: workRules.length,
+    results: workRule.length,
     data: {
       workRules,
     },
   });
 });
 
-export const getWorkSiteAndCompanyWorkRules = catchAsync(
-  async (req, res, next) => {
-    // Execute the query
-    const workRules = await WorkRuleService.getWorkSiteAndCompanyWorkRules(
-      req.params.id,
-      req.body.companyId,
-      req.period,
-    );
+export const resolvePostWorkRule = catchAsync(async (req, res, next) => {
+  // Execute the query
+  const workRules = await WorkRuleService.resolvePostWorkRule(
+    req.workSiteId,
+    req.companyId,
+    req.body,
+  );
 
-    // Send response
-    res.status(200).json({
-      status: 'success',
-      results: workRules.length,
-      data: {
-        workRules,
-      },
-    });
-  },
-);
+  // Send response
+  res.status(200).json({
+    status: 'success',
+    results: workRule.length,
+    data: {
+      workRules,
+    },
+  });
+});
 
 export const createWorkRule = catchAsync(async (req, res, next) => {
   // Execute the query
-  const workRule = await WorkRuleService.createWorkRule(req.body);
+  const workRule = await WorkRuleService.createWorkRule(
+    req.body,
+    req.workSiteId,
+    req.companyId,
+  );
 
   // Send response
   res.status(200).json({

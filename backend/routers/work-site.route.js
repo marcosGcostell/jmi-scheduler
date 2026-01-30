@@ -2,11 +2,7 @@ import express from 'express';
 
 import * as authController from '../controllers/auth.controller.js';
 import * as workSiteController from '../controllers/work-site.controller.js';
-import * as workRuleController from '../controllers/work-rule.controller.js';
-import {
-  checkRecordFields,
-  checkFieldsForUpdate,
-} from '../middleware/data-validators.js';
+import { checkRecordFields } from '../middleware/data-validators.js';
 import filterQuery from '../middleware/filter-query.js';
 
 const router = express.Router();
@@ -42,6 +38,9 @@ router
 
 router
   .route('/:id')
-  .patch(checkFieldsForUpdate(recordFields), workSiteController.updateWorkSite);
+  .patch(
+    checkRecordFields(recordFields, { exclude: ['all'] }),
+    workSiteController.updateWorkSite,
+  );
 
 export default router;

@@ -2,10 +2,7 @@ import express from 'express';
 
 import * as authController from '../controllers/auth.controller.js';
 import * as categoryController from '../controllers/category.controller.js';
-import {
-  checkRecordFields,
-  checkFieldsForUpdate,
-} from '../middleware/data-validators.js';
+import { checkRecordFields } from '../middleware/data-validators.js';
 
 const router = express.Router();
 const requiredFields = [
@@ -29,7 +26,7 @@ router
   .route('/:id')
   .get(categoryController.getCategory)
   .patch(
-    checkFieldsForUpdate(requiredFields),
+    checkRecordFields(requiredFields, { exclude: ['all'] }),
     categoryController.updateCategory,
   );
 
