@@ -2,6 +2,7 @@ import * as Company from '../models/company.model.js';
 import * as Resource from '../models/resource.model.js';
 import * as Category from '../models/category.model.js';
 import companyExists from '../domain/assertions/companyExists.js';
+import { getPool } from '../db/pool.js';
 import AppError from '../utils/app-error.js';
 
 export const getAllCompanies = async onlyActive => {
@@ -13,19 +14,28 @@ export const getCompany = async id => {
 };
 
 export const getCompanyResources = async (id, onlyActive, date) => {
-  const company = await companyExists(id);
+  const client = await getPool().connect();
 
-  if (company.is_main && date) {
-    return Resource.getCompanyResourcesWithStatus(id, onlyActive, date);
+  try {
+    const company = await companyExists(id);
+
+    if (company.is_main && date) {
+      return Resource.getCompanyResourcesWithStatus(id, onlyActive, date);
+    }
+
+    const resources = await Resource.getCompanyResources(id, onlyActive);
+
+    if (!resources.length) {
+      throw new AppError(400, 'La empresa no tiene trabajadores.');
+    }
+
+    return resources;
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
   }
-
-  const resources = await Resource.getCompanyResources(id, onlyActive);
-
-  if (!resources.length) {
-    throw new AppError(400, 'La empresa no tiene trabajadores.');
-  }
-
-  return resources;
 };
 
 export const getCompanyCategories = async (id, plusGlobal) => {

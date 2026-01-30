@@ -1,6 +1,6 @@
 import * as WorkSite from '../../models/work-site.model.js';
 
-const workSiteExists = async id => {
+const workSiteExists = async (id, client = undefined) => {
   const workSite = await WorkSite.getWorkSite(id);
   if (!workSite) {
     throw new AppError(404, 'La obra no existe.');

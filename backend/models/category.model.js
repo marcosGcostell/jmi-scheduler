@@ -1,9 +1,7 @@
 import { getPool } from '../db/pool.js';
 
-const pool = () => getPool();
-
-export const getAllCategories = async () => {
-  const { rows } = await pool().query(
+export const getAllCategories = async (client = getPool()) => {
+  const { rows } = await client.query(
     `
     SELECT g.id, g.name, g.company_id, c.name AS company_name
     FROM categories g
@@ -15,10 +13,14 @@ export const getAllCategories = async () => {
   return rows;
 };
 
-export const getCompanyCategories = async (companyId, plusGlobal) => {
+export const getCompanyCategories = async (
+  companyId,
+  plusGlobal,
+  client = getPool(),
+) => {
   const globalCondition = plusGlobal ? 'OR g.company_id = null' : '';
 
-  const { rows } = await pool().query(
+  const { rows } = await client.query(
     `
     SELECT g.id, g.name, g.company_id, c.name AS company_name
     FROM categories g
@@ -32,8 +34,8 @@ export const getCompanyCategories = async (companyId, plusGlobal) => {
   return rows;
 };
 
-export const getCategory = async id => {
-  const { rows } = await pool().query(
+export const getCategory = async (id, client = getPool()) => {
+  const { rows } = await client.query(
     `
     SELECT g.id, g.name, g.company_id, c.name AS company_name
     FROM categories g
@@ -46,8 +48,8 @@ export const getCategory = async id => {
   return rows[0];
 };
 
-export const findCategory = async (companyId, name) => {
-  const { rows } = await pool().query(
+export const findCategory = async (companyId, name, client = getPool()) => {
+  const { rows } = await client.query(
     `
     SELECT g.id, g.name, g.company_id, c.name AS company_name
     FROM categories g
@@ -60,11 +62,11 @@ export const findCategory = async (companyId, name) => {
   return rows[0];
 };
 
-export const createCategory = async data => {
+export const createCategory = async (data, client = getPool()) => {
   try {
     const { name, companyId } = data;
 
-    const { rows } = await pool().query(
+    const { rows } = await client.query(
       `
     INSERT INTO categories (name, company_id)
     VALUES ($1, $2)
@@ -79,9 +81,9 @@ export const createCategory = async data => {
   }
 };
 
-export const updateCategory = async (id, name) => {
+export const updateCategory = async (id, name, client = getPool()) => {
   try {
-    const { rows } = await pool().query(
+    const { rows } = await client.query(
       `
     UPDATE categories
     SET name = $1
@@ -97,21 +99,16 @@ export const updateCategory = async (id, name) => {
   }
 };
 
-export const deleteCategory = async id => {
-  const client = await pool().connect();
-  try {
-    const { rowCount, rows } = await client.query(
-      `
+export const deleteCategory = async (id, client = getPool()) => {
+  const { rowCount, rows } = await client.query(
+    `
     DELETE 
     FROM categories
     WHERE id = $1
     RETURNING id
   `,
-      [id],
-    );
+    [id],
+  );
 
-    return rowCount ? { id: rows[0].id } : null;
-  } finally {
-    client.release();
-  }
+  return rowCount ? { id: rows[0].id } : null;
 };

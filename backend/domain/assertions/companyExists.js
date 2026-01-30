@@ -1,6 +1,6 @@
 import * as Company from '../../models/company.model.js';
 
-const companyExists = async (id, onlyMain = false) => {
+const companyExists = async (id, onlyMain = false, client = undefined) => {
   const company = await Company.getCompany(id);
   if (!company) {
     throw new AppError(404, 'La empresa no existe.');
