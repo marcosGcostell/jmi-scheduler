@@ -6,7 +6,7 @@ export const getAllSickLeaves = async (
   client = getPool(),
 ) => {
   const periodCondition = period
-    ? ` AND s.start_date <= $2 AND (s.end_date IS NULL OR s.end_date >= $3)`
+    ? ` AND s.start_date <= $2::date AND (s.end_date IS NULL OR s.end_date >= $3::date)`
     : '';
   const values = [onlyActive];
   if (period) values.push(period.to, period.from);
@@ -44,7 +44,7 @@ export const getWorkerSickLeaves = async (
   client = getPool(),
 ) => {
   const periodCondition = period
-    ? ` AND s.start_date <= $2 AND (s.end_date IS NULL OR s.end_date >= $3)`
+    ? ` AND s.start_date <= $2::date AND (s.end_date IS NULL OR s.end_date >= $3::date)`
     : '';
   const values = [resourceId];
   if (period) values.push(period.to, period.from);
@@ -68,7 +68,7 @@ export const createSickLeave = async (data, client = getPool()) => {
     const { rows } = await pool().query(
       `
     INSERT INTO sick_leaves (resource_id, start_date, end_date)
-    VALUES ($1, $2, $3)
+    VALUES ($1, $2::date, $3::date)
     RETURNING id, resource_id, start_date, end_date
   `,
       [resourceId, startDate, endDate],
@@ -87,7 +87,7 @@ export const updateSickLeave = async (id, data, client = getPool()) => {
     const { rows } = await pool().query(
       `
     UPDATE sick_leaves
-    SET resource_id = $1, start_date = $2, end_date = $3
+    SET resource_id = $1, start_date = $2::date, end_date = $3::date
     WHERE id = $4
     RETURNING id, resource_id, start_date, end_date
   `,

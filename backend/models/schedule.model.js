@@ -6,7 +6,7 @@ export const getAllSchedules = async (
   client = getPool(),
 ) => {
   const periodCondition = period
-    ? ` AND s.valid_from <= $2 AND (s.valid_to IS NULL OR s.valid_to >= $3)`
+    ? ` AND s.valid_from <= $2::date AND (s.valid_to IS NULL OR s.valid_to >= $3::date)`
     : '';
   const values = [onlyActive];
   if (period) values.push(period.to, period.from);
@@ -52,7 +52,7 @@ export const getCompanySchedules = async (
   client = getPool(),
 ) => {
   const periodCondition = period
-    ? ` AND s.valid_from <= $2 AND (s.valid_to IS NULL OR s.valid_to >= $3)`
+    ? ` AND s.valid_from <= $2::date AND (s.valid_to IS NULL OR s.valid_to >= $3::date)`
     : '';
   const values = [companyId];
   if (period) values.push(period.to, period.from);
@@ -81,7 +81,7 @@ export const createSchedule = async (data, client = getPool()) => {
     const { rows } = await client.query(
       `
     INSERT INTO main_company_schedules (company_id, start_time, end_time, day_correction_minutes, valid_from, valid_to)
-    VALUES ($1, $2, $3, $4, $5, $6)
+    VALUES ($1, $2, $3, $4, $5::date, $6::date)
     RETURNING id, company_id, start_time, end_time, day_correction_minutes, valid_from, valid_to
   `,
       [companyId, startTime, endTime, dayCorrection, validFrom, validTo],
@@ -101,7 +101,7 @@ export const updateSchedule = async (id, data, client = getPool()) => {
     const { rows } = await client.query(
       `
     UPDATE main_company_schedules
-    SET company_id = $1, start_time = $2, end_time = $3, day_correction_minutes = $4, valid_from = $5, valid_to = $6
+    SET company_id = $1, start_time = $2, end_time = $3, day_correction_minutes = $4, valid_from = $5::date, valid_to = $6::date
     WHERE id = $7
     RETURNING id, company_id, start_time, end_time, day_correction_minutes, valid_from, valid_to
   `,
