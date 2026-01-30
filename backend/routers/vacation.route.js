@@ -2,10 +2,7 @@ import express from 'express';
 
 import * as authController from '../controllers/auth.controller.js';
 import * as vacationController from '../controllers/vacation.controller.js';
-import {
-  checkRecordFields,
-  checkFieldsForUpdate,
-} from '../middleware/data-validators.js';
+import { checkRecordFields } from '../middleware/data-validators.js';
 import filterQuery from '../middleware/filter-query.js';
 
 const router = express.Router();
@@ -45,7 +42,10 @@ router
 
 router
   .route('/:id')
-  .patch(checkFieldsForUpdate(recordFields), vacationController.updateVacation)
+  .patch(
+    checkRecordFields(recordFields, { exclude: ['all'] }),
+    vacationController.updateVacation,
+  )
   .delete(vacationController.deleteVacation);
 
 export default router;

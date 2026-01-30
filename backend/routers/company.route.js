@@ -3,10 +3,7 @@ import express from 'express';
 import * as authController from '../controllers/auth.controller.js';
 import * as companyController from '../controllers/company.controller.js';
 import * as scheduleController from '../controllers/schedule.controller.js';
-import {
-  checkRecordFields,
-  checkFieldsForUpdate,
-} from '../middleware/data-validators.js';
+import { checkRecordFields } from '../middleware/data-validators.js';
 import filterQuery from '../middleware/filter-query.js';
 
 const router = express.Router();
@@ -25,7 +22,10 @@ router
 router
   .route('/:id')
   .get(companyController.getCompany)
-  .patch(checkFieldsForUpdate(requiredFields), companyController.udpateCompany);
+  .patch(
+    checkRecordFields(requiredFields, { exclude: ['all'] }),
+    companyController.udpateCompany,
+  );
 
 router
   .route('/:id/resources')

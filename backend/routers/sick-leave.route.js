@@ -2,10 +2,7 @@ import express from 'express';
 
 import * as authController from '../controllers/auth.controller.js';
 import * as sickLeaveController from '../controllers/sick-leave.controller.js';
-import {
-  checkRecordFields,
-  checkFieldsForUpdate,
-} from '../middleware/data-validators.js';
+import { checkRecordFields } from '../middleware/data-validators.js';
 import filterQuery from '../middleware/filter-query.js';
 
 const router = express.Router();
@@ -46,7 +43,7 @@ router
 router
   .route('/:id')
   .patch(
-    checkFieldsForUpdate(recordFields),
+    checkRecordFields(recordFields, { exclude: ['all'] }),
     sickLeaveController.updateSickLeave,
   )
   .delete(sickLeaveController.deleteSickLeave);

@@ -2,10 +2,7 @@ import express from 'express';
 
 import * as authController from '../controllers/auth.controller.js';
 import * as workRuleController from '../controllers/work-rule.controller.js';
-import {
-  checkRecordFields,
-  checkFieldsForUpdate,
-} from '../middleware/data-validators.js';
+import { checkRecordFields } from '../middleware/data-validators.js';
 import filterQuery from '../middleware/filter-query.js';
 import filterWorkRuleQuery from '../middleware/filter-work-rule-query.js';
 
@@ -49,13 +46,20 @@ router.use(authController.protect);
 router
   .route('/resolve')
   .get(filterQuery, filterWorkRuleQuery, workRuleController.resolveGetWorkRule)
-  .post(filterWorkRuleQuery, workRuleController.resolvePostWorkRule);
+  .post(
+    filterWorkRuleQuery,
+    checkRecordFields(recordFields, { exclude: ['workSiteId', 'companyId'] }),
+    workRuleController.resolvePostWorkRule,
+  );
 
 router.route('/:id').get(workRuleController.getWorkRule);
 
 router
   .route('/:id')
-  .patch(checkFieldsForUpdate(recordFields), workRuleController.updateWorkRule);
+  .patch(
+    checkRecordFields(recordFields, { exclude: ['all'] }),
+    workRuleController.updateWorkRule,
+  );
 
 // Routes for admins only
 router.use(authController.restrictTo('admin'));
