@@ -48,14 +48,14 @@ export const getSchedule = async (id, client = getPool()) => {
 
 export const getCompanySchedules = async (
   companyId,
-  period,
+  date,
   client = getPool(),
 ) => {
-  const periodCondition = period
-    ? ` AND s.valid_from <= $2::date AND (s.valid_to IS NULL OR s.valid_to >= $3::date)`
+  const dateCondition = date
+    ? ` AND s.valid_from <= $2::date AND (s.valid_to IS NULL OR s.valid_to >= $2::date)`
     : '';
   const values = [companyId];
-  if (period) values.push(period.to, period.from);
+  if (date) values.push(date);
 
   const sql = `
     SELECT s.id, s.start_time, s.end_time, s.day_correction_minutes, s.valid_from, s.valid_to,
@@ -65,7 +65,7 @@ export const getCompanySchedules = async (
       ) AS company
     FROM main_company_schedules s
     LEFT JOIN companies c ON s.company_id = c.id
-    WHERE s.company_id = $1${periodCondition}
+    WHERE s.company_id = $1${dateCondition}
     `;
 
   const { rows } = await client.query(sql, values);

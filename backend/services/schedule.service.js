@@ -12,14 +12,18 @@ export const getSchedule = async id => {
   return scheduleExists(id);
 };
 
-export const getCompanySchedules = async (companyId, period) => {
+export const getCompanySchedules = async (companyId, period, date) => {
   const client = await getPool().connect();
 
   try {
     await client.query('BEGIN');
     await companyExists(companyId, true, client);
 
-    const schedules = await Schedule.getCompanySchedules(companyId, period);
+    const schedules = await Schedule.getCompanySchedules(
+      companyId,
+      date,
+      client,
+    );
 
     await client.query('COMMIT');
     return schedules;
