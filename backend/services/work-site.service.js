@@ -37,7 +37,7 @@ export const createWorkSite = async data => {
     return workSite;
   } catch (err) {
     await client.query('ROLLBACK');
-    if (err.code === '23503') {
+    if (err?.code === '23503') {
       throw new AppError(
         400,
         'Uno de los usuarios que se intenta asignar, no existe.',
@@ -73,7 +73,7 @@ export const updateWorkSite = async (id, data) => {
     return result;
   } catch (err) {
     await client.query('ROLLBACK');
-    if (err.code === '23503') {
+    if (err?.code === '23503') {
       throw new AppError(
         400,
         'Uno de los usuarios que se intenta asignar no existe.',

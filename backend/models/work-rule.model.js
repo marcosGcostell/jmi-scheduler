@@ -76,7 +76,7 @@ export const getConditionedWorkRules = async (
   }
   if (period) {
     whereString.text += whereString.count ? ' AND ' : '';
-    whereString.text += `s.valid_from <= $${whereString.count + 1}::date AND (s.valid_to IS NULL OR s.valid_to >= $${whereString.count + 2}::date)`;
+    whereString.text += `r.valid_from <= $${whereString.count + 1}::date AND (r.valid_to IS NULL OR r.valid_to >= $${whereString.count + 2}::date)`;
     values.push(period.to, period.from);
   }
 

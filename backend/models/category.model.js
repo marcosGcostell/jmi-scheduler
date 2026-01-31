@@ -26,7 +26,7 @@ export const getCompanyCategories = async (
     FROM categories g
     LEFT JOIN companies c ON g.company_id = c.id
     WHERE g.company_id = $1 ${globalCondition}
-    ORDER BY g.name ASC
+    ORDER BY c.name ASC NULLS FIRST, g.name ASC
     `,
     [companyId],
   );

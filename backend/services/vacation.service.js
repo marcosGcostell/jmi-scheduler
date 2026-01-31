@@ -25,13 +25,13 @@ export const createVacation = async data => {
     return vacation;
   } catch (err) {
     await client.query('ROLLBACK');
-    if (err.error.code === '23P01') {
+    if (err?.code === '23P01') {
       throw new AppError(
         409,
         'El trabajador ya tiene vacaciones en ese periodo',
       );
     }
-    if (err.error.code === '23514') {
+    if (err?.code === '23514') {
       throw new AppError(
         400,
         'La fecha de finalización debe ser posterior a la de comienzo.',
@@ -63,7 +63,7 @@ export const updateVacation = async (id, data) => {
     return result;
   } catch (err) {
     await client.query('ROLLBACK');
-    if (err.error.code === '23P01') {
+    if (err?.code === '23P01') {
       throw new AppError(
         400,
         'El trabajador ya tiene vacaciones en ese periodo.',

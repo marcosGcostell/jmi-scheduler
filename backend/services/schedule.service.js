@@ -17,7 +17,7 @@ export const getCompanySchedules = async (companyId, period, date) => {
 
   try {
     await client.query('BEGIN');
-    await companyExists(companyId, true, client);
+    await companyExists(companyId, 'main', client);
 
     const schedules = await Schedule.getCompanySchedules(
       companyId,
@@ -42,7 +42,7 @@ export const createSchedule = async data => {
 
   try {
     await client.query('BEGIN');
-    await companyExists(companyId, true, client);
+    await companyExists(companyId, 'main', client);
 
     const newData = {
       companyId,
@@ -59,13 +59,13 @@ export const createSchedule = async data => {
     return schedule;
   } catch (err) {
     await client.query('ROLLBACK');
-    if (err.error.code === '23P01') {
+    if (err?.code === '23P01') {
       throw new AppError(
         409,
         'La empresa ya tiene un horario activo en ese periodo',
       );
     }
-    if (err.error.code === '23514') {
+    if (err?.code === '23514') {
       throw new AppError(
         400,
         'La fecha de finalización debe ser posterior a la de comienzo.',
@@ -85,7 +85,7 @@ export const updateSchedule = async (id, data) => {
 
     const { companyId, startTime, endTime, dayCorrection, validFrom, validTo } =
       data;
-    if (companyId) await companyExists(companyId, true, client);
+    if (companyId) await companyExists(companyId, 'main', client);
 
     const newData = {
       companyId: companyId || schedule.company.id,
@@ -105,7 +105,7 @@ export const updateSchedule = async (id, data) => {
     return result;
   } catch (err) {
     await client.query('ROLLBACK');
-    if (err.error.code === '23P01') {
+    if (err?.code === '23P01') {
       throw new AppError(
         400,
         'La empresa ya tiene un horario activo en ese periodo.',
