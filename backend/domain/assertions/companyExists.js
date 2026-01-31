@@ -1,7 +1,8 @@
 import * as Company from '../../models/company.model.js';
+import AppError from '../../utils/app-error.js';
 
 export default async (id, onlyMain = false, client = undefined) => {
-  const company = await Company.getCompany(id);
+  const company = await Company.getCompany(id, client);
   if (!company) {
     throw new AppError(404, 'La empresa no existe.');
   }
