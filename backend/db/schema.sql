@@ -127,10 +127,12 @@ CREATE TABLE time_entries (
   
   work_site_id UUID NOT NULL REFERENCES work_sites(id),
   resource_id UUID NOT NULL REFERENCES resources(id),
+  applied_rule_id UUID REFERENCES work_site_company_rules(id),
 
+  work_date DATE NOT NULL,
   start_time TIMESTAMPTZ NOT NULL,
   end_time TIMESTAMPTZ,
-  work_day_minutes INTEGER,
+  worked_minutes INTEGER,
   comment TEXT,
 
   created_by UUID NOT NULL REFERENCES users(id),
@@ -198,6 +200,8 @@ CREATE TABLE sick_leaves (
 );
 
 -- INDEXES
+--
+
 -- Search for resources and dates
 CREATE INDEX idx_time_entries_resource_time ON time_entries(resource_id, start_time, end_time);
 
@@ -221,6 +225,10 @@ WHERE company_id IS NOT NULL;
 
 
 -- FUNCTIONS / TRIGGERS
+--
+--
+
+-- WORK SITES
 -- To set work_sites.is_open automatically according to end_date
 CREATE OR REPLACE FUNCTION set_work_site_is_open()
 RETURNS TRIGGER AS $$
@@ -237,6 +245,7 @@ ON work_sites
 FOR EACH ROW
 EXECUTE FUNCTION set_work_site_is_open();
 
+-- VACATIONS AND SICK LEAVES
 -- To constraint add vacations or sick leaves to resources of type 'person'
 CREATE OR REPLACE FUNCTION check_vacations_only_people()
 RETURNS trigger AS $$
@@ -264,3 +273,80 @@ CREATE TRIGGER trg_sick_leaves_only_people
 BEFORE INSERT OR UPDATE ON sick_leaves
 FOR EACH ROW
 EXECUTE FUNCTION check_vacations_only_people();
+
+-- TIME ENTRIES
+-- To set time_entries.worked_minutes automatically based on hours and rules
+CREATE OR REPLACE FUNCTION calculate_worked_minutes_for_entry(
+  p_time_entry_id UUID
+)
+RETURNS VOID AS $$
+DECLARE
+  v_start TIMESTAMPTZ;
+  v_end   TIMESTAMPTZ;
+  v_corr  INTEGER;
+BEGIN
+  SELECT
+    te.start_time,
+    te.end_time,
+    wr.day_correction_minutes
+  INTO
+    v_start,
+    v_end,
+    v_corr
+  FROM time_entries te
+  LEFT JOIN work_site_company_rules wr
+    ON wr.id = te.applied_rule_id
+  WHERE te.id = p_time_entry_id;
+
+  IF v_end IS NULL THEN -- for open register
+    UPDATE time_entries
+    SET worked_minutes = 0
+    WHERE id = p_time_entry_id;
+    RETURN;
+  END IF;
+
+  UPDATE time_entries
+  SET worked_minutes =
+      (EXTRACT(EPOCH FROM (v_end - v_start)) / 60)::INTEGER
+      + COALESCE(v_corr, 0)
+  WHERE id = p_time_entry_id;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION fn_time_entries_recalculate()
+RETURNS TRIGGER AS $$
+BEGIN
+  PERFORM calculate_worked_minutes_for_entry(NEW.id);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_time_entries_recalculate
+AFTER UPDATE OF
+  start_time,
+  end_time,
+  applied_rule_id
+ON time_entries
+FOR EACH ROW
+EXECUTE FUNCTION fn_time_entries_recalculate();
+
+-- WORK RULES
+-- When day correction is modified, force to recalculate worked_minutes
+-- on all time_entries rows affected
+CREATE OR REPLACE FUNCTION fn_rules_recalculate_entries()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE time_entries
+  SET applied_rule_id = applied_rule_id -- launch time_entries trigger
+  WHERE applied_rule_id = NEW.id
+    AND end_time IS NOT NULL;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_rules_day_correction_change
+AFTER UPDATE OF day_correction_minutes
+ON work_site_company_rules
+FOR EACH ROW
+EXECUTE FUNCTION fn_rules_recalculate_entries();
