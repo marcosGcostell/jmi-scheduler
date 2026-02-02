@@ -1,6 +1,6 @@
 import * as Vacation from '../models/vacation.model.js';
-import vacationExists from '../domain/assertions/vacationExists.js';
-import resourceExists from '../domain/assertions/resourceExists.js';
+import vacationExists from '../domain/assertions/vacation-exists.js';
+import resourceExists from '../domain/assertions/resource-exists.js';
 import { getPool } from '../db/pool.js';
 import AppError from '../utils/app-error.js';
 
@@ -47,20 +47,20 @@ export const updateVacation = async (id, data) => {
 
   try {
     await client.query('BEGIN');
-    const vacation = await vacationExists(id, client);
+    const existing = await vacationExists(id, client);
 
     const { resourceId, startDate, endDate } = data;
 
-    const newData = {
-      resourceId: resourceId || vacation.resource_id,
-      startDate: startDate || vacation.start_date,
-      endDate: endDate || vacation.end_date,
+    const modelData = {
+      resourceId: resourceId || existing.resource_id,
+      startDate: startDate || existing.start_date,
+      endDate: endDate || existing.end_date,
     };
 
-    const result = await Vacation.updateVacation(id, newData, client);
+    const vacation = await Vacation.updateVacation(id, modelData, client);
 
     await client.query('COMMIT');
-    return result;
+    return vacation;
   } catch (err) {
     await client.query('ROLLBACK');
     if (err?.code === '23P01') {

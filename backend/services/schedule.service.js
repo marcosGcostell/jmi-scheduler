@@ -1,6 +1,6 @@
 import * as Schedule from '../models/schedule.model.js';
-import scheduleExists from '../domain/assertions/scheduleExists.js';
-import companyExists from '../domain/assertions/companyExists.js';
+import scheduleExists from '../domain/assertions/schedule-exists.js';
+import companyExists from '../domain/assertions/company-exists.js';
 import { getPool } from '../db/pool.js';
 import AppError from '../utils/app-error.js';
 
@@ -44,7 +44,7 @@ export const createSchedule = async data => {
     await client.query('BEGIN');
     await companyExists(companyId, 'main', client);
 
-    const newData = {
+    const modelData = {
       companyId,
       startTime,
       endTime,
@@ -53,7 +53,7 @@ export const createSchedule = async data => {
       validTo: validTo ?? null,
     };
 
-    const schedule = await Schedule.createSchedule(newData, client);
+    const schedule = await Schedule.createSchedule(modelData, client);
 
     await client.query('COMMIT');
     return schedule;
@@ -81,28 +81,28 @@ export const updateSchedule = async (id, data) => {
 
   try {
     await client.query('BEGIN');
-    const schedule = await scheduleExists(id, client);
+    const existing = await scheduleExists(id, client);
 
     const { companyId, startTime, endTime, dayCorrection, validFrom, validTo } =
       data;
     if (companyId) await companyExists(companyId, 'main', client);
 
-    const newData = {
-      companyId: companyId || schedule.company.id,
-      startTime: startTime || schedule.start_time,
-      endTime: endTime || schedule.end_time,
-      dayCorrection: dayCorrection ?? schedule.day_correction_minutes,
-      validFrom: validFrom || schedule.valid_from,
-      validTo: validTo || schedule.valid_to,
+    const modelData = {
+      companyId: companyId || existing.company.id,
+      startTime: startTime || existing.start_time,
+      endTime: endTime || existing.end_time,
+      dayCorrection: dayCorrection ?? existing.day_correction_minutes,
+      validFrom: validFrom || existing.valid_from,
+      validTo: validTo || existing.valid_to,
     };
 
     // Allows you to change validTo to null
-    if (validTo === null) newData.validTo = null;
+    if (validTo === null) modelData.validTo = null;
 
-    const result = await Schedule.updateSchedule(id, newData, client);
+    const schedule = await Schedule.updateSchedule(id, modelData, client);
 
     await client.query('COMMIT');
-    return result;
+    return schedule;
   } catch (err) {
     await client.query('ROLLBACK');
     if (err?.code === '23P01') {

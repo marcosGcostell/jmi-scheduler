@@ -1,6 +1,6 @@
 import * as SickLeave from '../models/sick-leave.model.js';
-import sickLeaveExists from '../domain/assertions/sickLeaveExists.js';
-import resourceExists from '../domain/assertions/resourceExists.js';
+import sickLeaveExists from '../domain/assertions/sick-leave-exists.js';
+import resourceExists from '../domain/assertions/resource-exists.js';
 import { getPool } from '../db/pool.js';
 import AppError from '../utils/app-error.js';
 
@@ -21,13 +21,13 @@ export const createSickLeave = async data => {
 
     const { resourceId, startDate, endDate } = data;
 
-    const newData = {
+    const modelData = {
       resourceId,
       startDate,
       endDate: endDate ?? null,
     };
 
-    const sickLeave = await SickLeave.createSickLeave(newData, client);
+    const sickLeave = await SickLeave.createSickLeave(modelData, client);
 
     await client.query('COMMIT');
     return sickLeave;
@@ -52,23 +52,23 @@ export const updateSickLeave = async (id, data) => {
 
   try {
     await client.query('BEGIN');
-    const sickLeave = await sickLeaveExists(id, client);
+    const existing = await sickLeaveExists(id, client);
 
     const { resourceId, startDate, endDate } = data;
 
-    const newData = {
-      resourceId: resourceId || sickLeave.resource_id,
-      startDate: startDate || sickLeave.start_date,
-      endDate: endDate || sickLeave.end_date,
+    const modelData = {
+      resourceId: resourceId || existing.resource_id,
+      startDate: startDate || existing.start_date,
+      endDate: endDate || existing.end_date,
     };
 
     // Allows to set end_date to null
-    if (endDate === null) newData.endDate = null;
+    if (endDate === null) modelData.endDate = null;
 
-    const result = await SickLeave.updateSickLeave(id, newData, client);
+    const sickLeave = await SickLeave.updateSickLeave(id, modelData, client);
 
     await client.query('COMMIT');
-    return result;
+    return sickLeave;
   } catch (err) {
     await client.query('ROLLBACK');
     if (err?.code === '23P01') {

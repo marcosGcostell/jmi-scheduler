@@ -4,7 +4,7 @@ import * as authController from '../controllers/auth.controller.js';
 import * as workRuleController from '../controllers/work-rule.controller.js';
 import { checkRecordFields } from '../middleware/data-validators.js';
 import filterQuery from '../middleware/filter-query.js';
-import filterWorkRuleQuery from '../middleware/filter-work-rule-query.js';
+import filterFieldsQuery from '../middleware/filter-fields-query.js';
 
 const router = express.Router();
 const recordFields = [
@@ -45,9 +45,9 @@ router.use(authController.protect);
 
 router
   .route('/resolve')
-  .get(filterQuery, filterWorkRuleQuery, workRuleController.resolveGetWorkRules)
+  .get(filterQuery, filterFieldsQuery, workRuleController.resolveGetWorkRules)
   .post(
-    filterWorkRuleQuery,
+    filterFieldsQuery,
     checkRecordFields(recordFields, { exclude: ['workSiteId', 'companyId'] }),
     workRuleController.resolvePostWorkRule,
   );

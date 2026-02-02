@@ -1,7 +1,7 @@
 import * as WorkRule from '../models/work-rule.model.js';
-import workRuleExists from '../domain/assertions/workRuleExists.js';
-import companyExists from '../domain/assertions/companyExists.js';
-import workSiteExists from '../domain/assertions/workSiteExists.js';
+import workRuleExists from '../domain/assertions/work-rule-exists.js';
+import companyExists from '../domain/assertions/company-exists.js';
+import workSiteExists from '../domain/assertions/work-site-exists.js';
 import { getPool } from '../db/pool.js';
 import AppError from '../utils/app-error.js';
 
@@ -62,7 +62,7 @@ export const createWorkRule = async data => {
     await workSiteExists(workSiteId, client);
     await companyExists(companyId, 'regular', client);
 
-    const newData = {
+    const modelData = {
       workSiteId,
       companyId,
       dayCorrection,
@@ -70,7 +70,7 @@ export const createWorkRule = async data => {
       validTo: validTo ?? null,
     };
 
-    const workRule = await WorkRule.createWorkRule(newData, client);
+    const workRule = await WorkRule.createWorkRule(modelData, client);
 
     await client.query('COMMIT');
     return workRule;
@@ -99,27 +99,27 @@ export const updateWorkRule = async (id, data) => {
 
   try {
     await client.query('BEGIN');
-    const workRule = await workRuleExists(id, client);
+    const existing = await workRuleExists(id, client);
 
     // Nobody can change the work-site or the company in a work rule
     // Probably it will break the results for existing data
     const { dayCorrection, validFrom, validTo } = data;
 
-    const newData = {
-      workSiteId: workRule.work_site.id,
-      companyId: workRule.company.id,
-      dayCorrection: dayCorrection ?? workRule.day_correction_minutes,
-      validFrom: validFrom || workRule.valid_from,
-      validTo: validTo || workRule.valid_to,
+    const modelData = {
+      workSiteId: existing.work_site.id,
+      companyId: existing.company.id,
+      dayCorrection: dayCorrection ?? existing.day_correction_minutes,
+      validFrom: validFrom || existing.valid_from,
+      validTo: validTo || existing.valid_to,
     };
 
     // Allows you to change validTo to null
-    if (validTo === null) newData.validTo = null;
+    if (validTo === null) modelData.validTo = null;
 
-    const result = await WorkRule.updateWorkRule(id, newData, client);
+    const workRule = await WorkRule.updateWorkRule(id, modelData, client);
 
     await client.query('COMMIT');
-    return result;
+    return workRule;
   } catch (err) {
     await client.query('ROLLBACK');
     if (err?.code === '23P01') {

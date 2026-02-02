@@ -1,6 +1,6 @@
 import * as Category from '../models/category.model.js';
 import * as Resource from '../models/resource.model.js';
-import categoryExists from '../domain/assertions/categoryExists.js';
+import categoryExists from '../domain/assertions/category-exists.js';
 import { getPool } from '../db/pool.js';
 import AppError from '../utils/app-error.js';
 
