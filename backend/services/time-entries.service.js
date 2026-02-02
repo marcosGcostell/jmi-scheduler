@@ -79,22 +79,25 @@ export const createTimeEntry = async data => {
     // Get the work rule from resource for this work site
     const resource = await Resource.getResource(resourceId, client);
     const companyIsMain = resource.company.is_main;
+    let appliedRuleId = null;
+    let mainSchedule = null;
 
-    const appliedRuleId = !companyIsMain
-      ? await WorkRule.getConditionedWorkRules(
-          workSiteId,
-          resource.company.id,
-          { from: workDate, to: workDate },
-          client,
-        ).shift()?.id
-      : null;
-    const mainSchedule = companyIsMain
-      ? await Schedule.getCompanySchedules(
-          resource.company.id,
-          workDate,
-          client,
-        )
-      : null;
+    if (!companyIsMain) {
+      const workRules = await WorkRule.getConditionedWorkRules(
+        workSiteId,
+        resource.company.id,
+        { from: workDate, to: workDate },
+        client,
+      );
+      appliedRuleId = workRules.shift()?.id;
+    }
+
+    if (companyIsMain)
+      mainSchedule = await Schedule.getCompanySchedules(
+        resource.company.id,
+        workDate,
+        client,
+      );
 
     if (companyIsMain && !mainSchedule)
       throw new AppError(
@@ -166,8 +169,12 @@ export const updateTimeEntry = async (id, data) => {
 
     if (appliedRuleId) await workRuleExists(appliedRuleId, client);
 
+    // For main company, only allow to change resource and comment
     const modelData = {
+      appliedRuleId: existing.applied_rule_id,
       resourceId: resourceId || existing.resource.id,
+      startTime: existing.start_time,
+      endTime: existing.end_time,
       comment: comment ?? existing.comment,
     };
 

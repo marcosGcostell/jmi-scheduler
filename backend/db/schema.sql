@@ -289,22 +289,25 @@ RETURNS VOID AS $$
 DECLARE
   v_start TIMESTAMPTZ;
   v_end   TIMESTAMPTZ;
+  v_mode  TEXT;
   v_corr  INTEGER;
 BEGIN
   SELECT
     te.start_time,
     te.end_time,
+    te.worked_minutes_mode,
     wr.day_correction_minutes
   INTO
     v_start,
     v_end,
+    v_mode,
     v_corr
   FROM time_entries te
   LEFT JOIN work_site_company_rules wr
     ON wr.id = te.applied_rule_id
   WHERE te.id = p_time_entry_id;
 
-  IF te.worked_minutes_mode = 'manual' THEN -- only for auto mode
+  IF v_mode = 'manual' THEN -- only for auto mode
     RETURN;
   END IF;
 

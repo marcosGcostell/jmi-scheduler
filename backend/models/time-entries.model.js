@@ -47,45 +47,10 @@ export const getTimeEntriesBy = async (
     LEFT JOIN resources r ON t.resource_id = r.id
     LEFT JOIN companies c ON r.company_id = c.id
     LEFT JOIN work_site_company_rules ru
-      ON ru.company_id = c.id AND ru.work_site_id = w.id
-    ${whereClause}
-    ORDER BY t.work_date DESC, w.name ASC, c.is_main DESC, c.name ASC, r.resource_type DESC, r.name ASC 
-    `;
-
-  const { rows } = await client.query(sql, values);
-
-  return rows;
-};
-
-export const getAllTimeEntries = async (period, client = getPool()) => {
-  let whereClause = '';
-  const values = [];
-
-  if (period) {
-    whereClause += 'WHERE t.work_date BETWEEN $1::date AND $2::date';
-    values.push(period.from, period.to);
-  }
-
-  const sql = `
-    SELECT t.id, t.work_date, t.start_time, t.end_time, t.worked_minutes, ru.day_correction_minutes AS correction, t.comment, t.created_by,
-      json_build_object(
-        'id', w.id,
-        'name', w.name
-      ) AS work_site,
-      json_build_object(
-        'id', c.id,
-        'name', c.name
-      ) AS company,
-      json_build_object(
-        'id', r.id,
-        'name', r.name
-      ) AS resource
-    FROM time_entries t
-    LEFT JOIN work_sites w ON t.work_site_id = w.id
-    LEFT JOIN resources r ON t.resource_id = r.id
-    LEFT JOIN companies c ON r.company_id = c.id
-    LEFT JOIN work_site_company_rules ru
-      ON ru.company_id = c.id AND ru.work_site_id = w.id
+      ON ru.company_id = c.id 
+      AND ru.work_site_id = w.id
+      AND t.work_date >= ru.valid_from
+      AND (ru.valid_to IS NULL OR t.work_date <= ru.valid_to)
     ${whereClause}
     ORDER BY t.work_date DESC, w.name ASC, c.is_main DESC, c.name ASC, r.resource_type DESC, r.name ASC 
     `;
@@ -116,7 +81,10 @@ export const getTimeEntry = async (id, client = getPool()) => {
     LEFT JOIN resources r ON t.resource_id = r.id
     LEFT JOIN companies c ON r.company_id = c.id
     LEFT JOIN work_site_company_rules ru
-      ON ru.company_id = c.id AND ru.work_site_id = w.id
+      ON ru.company_id = c.id 
+      AND ru.work_site_id = w.id
+      AND t.work_date >= ru.valid_from
+      AND (ru.valid_to IS NULL OR t.work_date <= ru.valid_to)
     WHERE t.id = $1
     `,
     [id],
@@ -140,9 +108,12 @@ export const createTimeEntry = async (data, client = getPool()) => {
       workedMinutesMode,
     } = data;
 
-    const isManualMode = workedMinutesMode === 'manual' && !isNaN(workedMinutes);
+    const isManualMode =
+      workedMinutesMode === 'manual' && !isNaN(workedMinutes);
 
-    const extraFields = isManualMode ? `, worked_minutes, worked_minutes_mode` : ''
+    const extraFields = isManualMode
+      ? `, worked_minutes, worked_minutes_mode`
+      : '';
 
     const { rows } = await client.query(
       `
@@ -161,7 +132,10 @@ export const createTimeEntry = async (data, client = getPool()) => {
       LEFT JOIN resources r ON nte.resource_id = r.id
       LEFT JOIN companies c ON r.company_id = c.id
       LEFT JOIN work_site_company_rules ru
-        ON ru.company_id = c.id AND ru.work_site_id = w.id
+        ON ru.company_id = c.id 
+        AND ru.work_site_id = w.id
+        AND nte.work_date >= ru.valid_from
+        AND (ru.valid_to IS NULL OR nte.work_date <= ru.valid_to)
     `,
       [
         workSiteId,
@@ -172,7 +146,8 @@ export const createTimeEntry = async (data, client = getPool()) => {
         endTime,
         comment,
         userId,
-        ...(isManualMode ? [workedMinutes, workedMinutesMode] : []),]
+        ...(isManualMode ? [workedMinutes, workedMinutesMode] : []),
+      ],
     );
 
     return rows[0];
@@ -204,7 +179,10 @@ export const updateTimeEntry = async (id, data, client = getPool()) => {
       LEFT JOIN resources r ON ute.resource_id = r.id
       LEFT JOIN companies c ON r.company_id = c.id
       LEFT JOIN work_site_company_rules ru
-        ON ru.company_id = c.id AND ru.work_site_id = w.id
+        ON ru.company_id = c.id 
+        AND ru.work_site_id = w.id
+        AND ute.work_date >= ru.valid_from
+        AND (ru.valid_to IS NULL OR ute.work_date <= ru.valid_to)
   `,
       [resourceId, appliedRuleId, startTime, endTime, comment, id],
     );
@@ -239,7 +217,10 @@ export const fixWorkedMinutes = async (
       LEFT JOIN resources r ON ute.resource_id = r.id
       LEFT JOIN companies c ON r.company_id = c.id
       LEFT JOIN work_site_company_rules ru
-        ON ru.company_id = c.id AND ru.work_site_id = w.id
+        ON ru.company_id = c.id 
+        AND ru.work_site_id = w.id
+        AND ute.work_date >= ru.valid_from
+        AND (ru.valid_to IS NULL OR ute.work_date <= ru.valid_to)
   `,
       [workedMinutes, id],
     );
