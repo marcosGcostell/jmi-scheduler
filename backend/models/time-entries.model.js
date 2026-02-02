@@ -136,13 +136,19 @@ export const createTimeEntry = async (data, client = getPool()) => {
       endTime,
       comment,
       userId,
+      workedMinutes,
+      workedMinutesMode,
     } = data;
+
+    const isManualMode = workedMinutesMode === 'manual' && !isNaN(workedMinutes);
+
+    const extraFields = isManualMode ? `, worked_minutes, worked_minutes_mode` : ''
 
     const { rows } = await client.query(
       `
       WITH new_time_entry AS ( 
-        INSERT INTO time_entries (work_site_id, resource_id, applied_rule_id, work_date, start_time, end_time, comment, created_by)
-        VALUES ($1, $2, $3, $4::date, $5, $6, $7, $8)
+        INSERT INTO time_entries (work_site_id, resource_id, applied_rule_id, work_date, start_time, end_time, comment, created_by${extraFields})
+        VALUES ($1, $2, $3, $4::date, $5, $6, $7, $8${isManualMode ? ', $9, $10' : ''})
         RETURNING id, work_site_id, resource_id, applied_rule_id, work_date, start_time, end_time, worked_minutes, comment, created_by
       )
       SELECT nte.id, w.name as work_site_name, c.name as company_name, nte.work_date, nte.start_time, nte.end_time, nte.worked_minutes, ru.day_correction_minutes AS correction, nte.comment, nte.created_by,
@@ -166,7 +172,7 @@ export const createTimeEntry = async (data, client = getPool()) => {
         endTime,
         comment,
         userId,
-      ],
+        ...(isManualMode ? [workedMinutes, workedMinutesMode] : []),]
     );
 
     return rows[0];
@@ -219,7 +225,7 @@ export const fixWorkedMinutes = async (
       `
       WITH updated_time_entry AS ( 
         UPDATE time_entries
-        SET worked_minutes = $1
+        SET worked_minutes = $1, worked_minutes_mode = 'manual'
         WHERE id = $2
         RETURNING id, work_site_id, resource_id, applied_rule_id, work_date, start_time, end_time, worked_minutes, comment, created_by
       )

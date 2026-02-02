@@ -2,6 +2,7 @@ import * as TimeEntry from '../models/time-entries.model.js';
 import * as Resource from '../models/resource.model.js';
 import * as WorkSite from '../models/work-site.model.js';
 import * as WorkRule from '../models/work-rule.model.js';
+import * as Schedule from '../models/schedule.model.js';
 import resourceExists from '../domain/assertions/resource-exists.js';
 import workSiteExists from '../domain/assertions/work-site-exists.js';
 import workRuleExists from '../domain/assertions/work-rule-exists.js';
@@ -9,6 +10,7 @@ import companyExists from '../domain/assertions/company-exists.js';
 import timeEntryExists from '../domain/assertions/time-entry-exists.js';
 import { getPool } from '../db/pool.js';
 import AppError from '../utils/app-error.js';
+import parseTimeToMinutes from '../utils/parse-time-to-minutes.js';
 
 const _allowQuery = async (userId, workSiteId, client) => {
   if (!workSiteId) return false;
@@ -76,23 +78,55 @@ export const createTimeEntry = async data => {
 
     // Get the work rule from resource for this work site
     const resource = await Resource.getResource(resourceId, client);
-    const appliedRuleId = await WorkRule.getConditionedWorkRules(
-      workSiteId,
-      resource.company.id,
-      { from: workDate, to: workDate },
-      client,
-    );
+    const companyIsMain = resource.company.is_main;
+
+    const appliedRuleId = !companyIsMain
+      ? await WorkRule.getConditionedWorkRules(
+          workSiteId,
+          resource.company.id,
+          { from: workDate, to: workDate },
+          client,
+        ).shift()?.id
+      : null;
+    const mainSchedule = companyIsMain
+      ? await Schedule.getCompanySchedules(
+          resource.company.id,
+          workDate,
+          client,
+        )
+      : null;
+
+    if (companyIsMain && !mainSchedule)
+      throw new AppError(
+        400,
+        'La empresa principal debe tener siempre un horario activo. Avise a un administrador.',
+      );
 
     const modelData = {
       workSiteId,
       resourceId,
       appliedRuleId: appliedRuleId ?? null,
       workDate,
-      startTime: new Date(startTime),
-      endTime: endTime ? new Date(endTime) : null,
+      startTime: companyIsMain ? mainSchedule.start_time : new Date(startTime),
+      endTime: companyIsMain
+        ? mainSchedule.end_time
+        : endTime
+          ? new Date(endTime)
+          : null,
       comment: comment ?? null,
       userId,
     };
+
+    if (companyIsMain) {
+      modelData.appliedRuleId = null;
+      modelData.startTime = mainSchedule.start_time;
+      modelData.endTime = mainSchedule.end_time;
+      modelData.workedMinutes =
+        parseTimeToMinutes(mainSchedule.end_time) -
+        parseTimeToMinutes(mainSchedule.start_time) +
+        mainSchedule.day_correction_minutes;
+      modelData.workedMinutesMode = 'manual';
+    }
 
     const timeEntry = await TimeEntry.createTimeEntry(modelData, client);
 
@@ -134,16 +168,20 @@ export const updateTimeEntry = async (id, data) => {
 
     const modelData = {
       resourceId: resourceId || existing.resource.id,
-      appliedRuleId: appliedRuleId || existing.applied_rule_id,
-      startTime: startTime ? new Date(startTime) : existing.start_time,
-      endTime: endTime ? new Date(endTime) : existing.end_time,
       comment: comment ?? existing.comment,
     };
 
-    // Allow to open the register by setting endTime to null
-    if (endTime === null) modelData.endTime = null;
-    // Also allow to remove a working rule already applied or a comment
-    if (appliedRuleId === null) modelData.appliedRuleId = null;
+    if (!existing.company.is_main) {
+      modelData.appliedRuleId = appliedRuleId || existing.applied_rule_id;
+      modelData.startTime = startTime
+        ? new Date(startTime)
+        : existing.start_time;
+      modelData.endTime = endTime ? new Date(endTime) : existing.end_time;
+      // Allow to open the register by setting endTime to null
+      if (endTime === null) modelData.endTime = null;
+      // Also allow to remove a working rule already applied or a comment
+      if (appliedRuleId === null) modelData.appliedRuleId = null;
+    }
 
     const timeEntry = await TimeEntry.updateTimeEntry(id, modelData, client);
 

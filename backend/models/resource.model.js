@@ -30,7 +30,8 @@ export const getResource = async (id, client = getPool()) => {
     SELECT r.id, r.name, r.user_id, r.resource_type, r.active,
       json_build_object(
         'id', c.id,
-        'name', c.name
+        'name', c.name,
+        'is_main', c.is_main
       ) AS company,
       json_build_object(
         'id', g.id,

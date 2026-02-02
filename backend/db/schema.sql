@@ -133,6 +133,7 @@ CREATE TABLE time_entries (
   start_time TIMESTAMPTZ NOT NULL,
   end_time TIMESTAMPTZ,
   worked_minutes INTEGER,
+  worked_minutes_mode TEXT NOT NULL CHECK (worked_minutes_mode IN ('auto', 'manual')) DEFAULT 'auto',
   comment TEXT,
 
   created_by UUID NOT NULL REFERENCES users(id),
@@ -203,11 +204,16 @@ CREATE TABLE sick_leaves (
 --
 
 -- Search for resources and dates
-CREATE INDEX idx_time_entries_resource_time ON time_entries(resource_id, start_time, end_time);
+CREATE INDEX idx_time_entries_worksite_date ON time_entries (work_site_id, work_date);
+CREATE INDEX idx_time_entries_resource ON time_entries (resource_id);
+CREATE INDEX idx_time_entries_worksite_resource_date
+ON time_entries (work_site_id, resource_id, work_date);
 
 -- Search for work sites
-CREATE INDEX idx_time_entries_worksite_time ON time_entries(work_site_id, start_time);
 CREATE INDEX idx_work_sites_is_open ON work_sites (is_open);
+
+-- Search for company in resources
+CREATE INDEX idx_resources_company ON resources (company_id, id);
 
 -- Availability
 CREATE INDEX idx_vacations_resource_dates ON vacations (resource_id, start_date, end_date);
@@ -230,7 +236,7 @@ WHERE company_id IS NOT NULL;
 
 -- WORK SITES
 -- To set work_sites.is_open automatically according to end_date
-CREATE OR REPLACE FUNCTION set_work_site_is_open()
+CREATE OR REPLACE FUNCTION fn_set_work_site_is_open()
 RETURNS TRIGGER AS $$
 BEGIN
   NEW.is_open :=
@@ -243,11 +249,11 @@ CREATE TRIGGER trg_set_is_open
 BEFORE INSERT OR UPDATE OF end_date
 ON work_sites
 FOR EACH ROW
-EXECUTE FUNCTION set_work_site_is_open();
+EXECUTE FUNCTION fn_set_work_site_is_open();
 
 -- VACATIONS AND SICK LEAVES
 -- To constraint add vacations or sick leaves to resources of type 'person'
-CREATE OR REPLACE FUNCTION check_vacations_only_people()
+CREATE OR REPLACE FUNCTION fn_check_vacations_only_people()
 RETURNS trigger AS $$
 BEGIN
   IF NOT EXISTS (
@@ -267,16 +273,16 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER trg_vacations_only_people
 BEFORE INSERT OR UPDATE ON vacations
 FOR EACH ROW
-EXECUTE FUNCTION check_vacations_only_people();
+EXECUTE FUNCTION fn_check_vacations_only_people();
 
 CREATE TRIGGER trg_sick_leaves_only_people
 BEFORE INSERT OR UPDATE ON sick_leaves
 FOR EACH ROW
-EXECUTE FUNCTION check_vacations_only_people();
+EXECUTE FUNCTION fn_check_vacations_only_people();
 
 -- TIME ENTRIES
 -- To set time_entries.worked_minutes automatically based on hours and rules
-CREATE OR REPLACE FUNCTION calculate_worked_minutes_for_entry(
+CREATE OR REPLACE FUNCTION fn_calculate_worked_minutes_for_entry(
   p_time_entry_id UUID
 )
 RETURNS VOID AS $$
@@ -298,6 +304,10 @@ BEGIN
     ON wr.id = te.applied_rule_id
   WHERE te.id = p_time_entry_id;
 
+  IF te.worked_minutes_mode = 'manual' THEN -- only for auto mode
+    RETURN;
+  END IF;
+
   IF v_end IS NULL THEN -- for open register
     UPDATE time_entries
     SET worked_minutes = 0
@@ -316,7 +326,7 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION fn_time_entries_recalculate()
 RETURNS TRIGGER AS $$
 BEGIN
-  PERFORM calculate_worked_minutes_for_entry(NEW.id);
+  PERFORM fn_calculate_worked_minutes_for_entry(NEW.id);
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
