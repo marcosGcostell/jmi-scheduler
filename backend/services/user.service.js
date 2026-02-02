@@ -1,7 +1,7 @@
 import * as User from '../models/user.model.js';
 import * as WorkSite from '../models/work-site.model.js';
 import * as authService from './auth.service.js';
-import userExists from '../domain/assertions/userExists.js';
+import userExists from '../domain/assertions/user-exists.js';
 import { getPool } from '../db/pool.js';
 import AppError from '../utils/app-error.js';
 
@@ -64,19 +64,19 @@ export const updateUser = async (id, data) => {
 
   try {
     await client.query('BEGIN');
-    const user = await userExists(id, client);
+    const existing = await userExists(id, client);
 
-    const newData = {
-      email: email?.toLowerCase().trim() || user.email,
-      fullName: fullName?.trim() || user.full_name,
-      role: role || user.role || 'user',
-      active: active ?? user.active ?? true,
+    const modelData = {
+      email: email?.toLowerCase().trim() || existing.email,
+      fullName: fullName?.trim() || existing.full_name,
+      role: role || existing.role || 'user',
+      active: active ?? existing.active ?? true,
     };
 
-    const result = await User.updateUser(user.id, newData, client);
+    const user = await User.updateUser(existing.id, modelData, client);
 
     await client.query('COMMIT');
-    return result;
+    return user;
   } catch (err) {
     await client.query('ROLLBACK');
     throw err;
@@ -89,17 +89,17 @@ export const deleteUser = async id => {
   const client = await getPool().connect();
 
   try {
-    const user = await userExists(id, client);
-    if (!user?.active)
+    const existing = await userExists(id, client);
+    if (!existing?.active)
       throw new AppError(
         400,
         'El usuario registrado con este email ya está deshabilitado',
       );
 
-    const result = await User.disableUser(user.id, client);
+    const user = await User.disableUser(existing.id, client);
 
     await client.query('COMMIT');
-    return result;
+    return user;
   } catch (err) {
     await client.query('ROLLBACK');
     throw err;

@@ -2,11 +2,11 @@ import * as TimeEntry from '../models/time-entries.model.js';
 import * as Resource from '../models/resource.model.js';
 import * as WorkSite from '../models/work-site.model.js';
 import * as WorkRule from '../models/work-rule.model.js';
-import resourceExists from '../domain/assertions/resourceExists.js';
-import workSiteExists from '../domain/assertions/workSiteExists.js';
-import workRuleExists from '../domain/assertions/workRuleExists.js';
-import companyExists from '../domain/assertions/companyExists.js';
-import timeEntryExists from '../domain/assertions/timeEntryExists.js';
+import resourceExists from '../domain/assertions/resource-exists.js';
+import workSiteExists from '../domain/assertions/work-site-exists.js';
+import workRuleExists from '../domain/assertions/work-rule-exists.js';
+import companyExists from '../domain/assertions/company-exists.js';
+import timeEntryExists from '../domain/assertions/time-entry-exists.js';
 import { getPool } from '../db/pool.js';
 import AppError from '../utils/app-error.js';
 
@@ -14,7 +14,8 @@ const _allowQuery = async (userId, workSiteId, client) => {
   if (!workSiteId) return false;
 
   const userWorkSites = await WorkSite.findMyWorkSites(userId, null, client);
-  return userWorkSites.includes(workSiteId);
+  const userWorkSitesIds = userWorkSites.map(ws => ws.id);
+  return userWorkSitesIds.includes(workSiteId);
 };
 
 export const getTimeEntry = async id => {

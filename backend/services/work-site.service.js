@@ -1,5 +1,5 @@
 import * as WorkSite from '../models/work-site.model.js';
-import workSiteExists from '../domain/assertions/workSiteExists.js';
+import workSiteExists from '../domain/assertions/work-site-exists.js';
 import { getPool } from '../db/pool.js';
 import AppError from '../utils/app-error.js';
 
@@ -25,13 +25,13 @@ export const createWorkSite = async data => {
       throw new AppError(400, 'Ya hay una obra registrada con este código.');
     }
 
-    const newData = {
+    const modelData = {
       name: name?.trim(),
       code: code?.trim(),
       startDate,
     };
 
-    const workSite = await WorkSite.createWorkSite(newData, userIds, client);
+    const workSite = await WorkSite.createWorkSite(modelData, userIds, client);
 
     await client.query('COMMIT');
     return workSite;
@@ -55,22 +55,27 @@ export const updateWorkSite = async (id, data) => {
 
   try {
     await client.query('BEGIN');
-    const workSite = await workSiteExists(id, client);
+    const existing = await workSiteExists(id, client);
 
-    const newData = {
-      name: name?.trim() || workSite.name,
-      code: code?.trim() || workSite.code,
-      startDate: startDate ?? workSite.start_date ?? null,
-      endDate: endDate ?? workSite.end_date ?? null,
+    const modelData = {
+      name: name?.trim() || existing.name,
+      code: code?.trim() || existing.code,
+      startDate: startDate ?? existing.start_date ?? null,
+      endDate: endDate ?? existing.end_date ?? null,
     };
 
     // This allows to set the endDate to null after is set
-    if (data.endDate === null) newData.endDate = null;
+    if (data.endDate === null) modelData.endDate = null;
 
-    const result = await WorkSite.updateWorkSite(id, newData, userIds, client);
+    const workSite = await WorkSite.updateWorkSite(
+      id,
+      modelData,
+      userIds,
+      client,
+    );
 
     await client.query('COMMIT');
-    return result;
+    return workSite;
   } catch (err) {
     await client.query('ROLLBACK');
     if (err?.code === '23503') {

@@ -1,7 +1,7 @@
 import * as Company from '../models/company.model.js';
 import * as Resource from '../models/resource.model.js';
 import * as Category from '../models/category.model.js';
-import companyExists from '../domain/assertions/companyExists.js';
+import companyExists from '../domain/assertions/company-exists.js';
 import { getPool } from '../db/pool.js';
 import AppError from '../utils/app-error.js';
 
@@ -73,7 +73,7 @@ export const createCompany = async name => {
     );
 
     if (companyAlreadyExist?.id) {
-      throw new AppError(409, 'Ya hay un empresa registrada con este nombre');
+      throw new AppError(400, 'Ya hay un empresa registrada con este nombre');
     }
 
     const company = await Company.createCompany({
@@ -97,25 +97,25 @@ export const updateCompany = async (id, data, isAdmin) => {
 
   try {
     await client.query('BEGIN');
-    const company = await companyExists(id, null, client);
+    const existing = await companyExists(id, null, client);
 
-    if (company.is_main && !isAdmin) {
+    if (existing.is_main && !isAdmin) {
       throw new AppError(
         403,
         'No tiene permiso para modificar la empresa principal.',
       );
     }
 
-    const newData = {
-      name: name?.trim() || company.name,
-      isMain: isMain ?? company.is_main ?? false,
-      active: active ?? company.active ?? true,
+    const modelData = {
+      name: name?.trim() || existing.name,
+      isMain: isMain ?? existing.is_main ?? false,
+      active: active ?? existing.active ?? true,
     };
 
-    const result = await Company.updateCompany(id, newData, client);
+    const company = await Company.updateCompany(id, modelData, client);
 
     await client.query('COMMIT');
-    return result;
+    return company;
   } catch (err) {
     await client.query('ROLLBACK');
     throw err;
@@ -129,15 +129,15 @@ export const deleteCompany = async id => {
 
   try {
     await client.query('BEGIN');
-    const company = await companyExists(id, 'regular', client);
+    const existing = await companyExists(id, 'regular', client);
 
-    if (!company?.active)
+    if (!existing?.active)
       throw new AppError(400, 'La empresa ya está deshabilitada.');
 
-    const result = await Company.disableCompany(company.id);
+    const company = await Company.disableCompany(existing.id);
 
     await client.query('COMMIT');
-    return result;
+    return company;
   } catch (err) {
     await client.query('ROLLBACK');
     throw err;

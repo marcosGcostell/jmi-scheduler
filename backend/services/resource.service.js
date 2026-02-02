@@ -1,7 +1,7 @@
 import * as Resource from '../models/resource.model.js';
 import * as Vacation from '../models/vacation.model.js';
 import * as SickLeave from '../models/sick-leave.model.js';
-import resourceExists from '../domain/assertions/resourceExists.js';
+import resourceExists from '../domain/assertions/resource-exists.js';
 import { getPool } from '../db/pool.js';
 import AppError from '../utils/app-error.js';
 
@@ -76,28 +76,28 @@ export const updateResource = async (id, data, userRole) => {
 
   try {
     await client.query('BEGIN');
-    const resource = await resourceExists(id, client);
+    const existing = await resourceExists(id, client);
 
     // Users can only change the name, type and categoy fields
-    const newData = {
-      name: name?.trim() || resource.name,
-      userId: resource.user_id,
-      companyId: resource.company.id,
-      categoryId: categoryId || resource.category.id,
-      resourceType: resourceType || resource.resource_type,
-      active: resource.active,
+    const modelData = {
+      name: name?.trim() || existing.name,
+      userId: existing.user_id,
+      companyId: existing.company.id,
+      categoryId: categoryId || existing.category.id,
+      resourceType: resourceType || existing.resource_type,
+      active: existing.active,
     };
 
     if (userRole === 'admin') {
-      newData.userId = userId ?? resource.user_id;
-      newData.companyId = companyId || resource.company.id;
-      newData.active = active ?? resource.active ?? true;
+      modelData.userId = userId ?? existing.user_id;
+      modelData.companyId = companyId || existing.company.id;
+      modelData.active = active ?? existing.active ?? true;
     }
 
-    const result = await Resource.updateResource(id, newData, client);
+    const resource = await Resource.updateResource(id, modelData, client);
 
     await client.query('COMMIT');
-    return result;
+    return resource;
   } catch (err) {
     await client.query('ROLLBACK');
     throw err;
@@ -111,15 +111,15 @@ export const deleteResource = async id => {
 
   try {
     await client.query('BEGIN');
-    const resource = await resourceExists(id, client);
+    const existing = await resourceExists(id, client);
 
-    if (!resource?.active)
+    if (!existing?.active)
       throw new AppError(400, 'El trabajador o equipo ya está deshabilitado.');
 
-    const result = await Resource.disableResource(resource.id, client);
+    const resource = await Resource.disableResource(existing.id, client);
 
     await client.query('COMMIT');
-    return result;
+    return resource;
   } catch (err) {
     await client.query('ROLLBACK');
     throw err;
