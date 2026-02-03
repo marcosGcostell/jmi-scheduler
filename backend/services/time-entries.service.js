@@ -1,6 +1,5 @@
 import * as TimeEntry from '../models/time-entries.model.js';
 import * as Resource from '../models/resource.model.js';
-import * as WorkSite from '../models/work-site.model.js';
 import * as WorkRule from '../models/work-rule.model.js';
 import * as Schedule from '../models/schedule.model.js';
 import resourceExists from '../domain/assertions/resource-exists.js';
@@ -8,17 +7,10 @@ import workSiteExists from '../domain/assertions/work-site-exists.js';
 import workRuleExists from '../domain/assertions/work-rule-exists.js';
 import companyExists from '../domain/assertions/company-exists.js';
 import timeEntryExists from '../domain/assertions/time-entry-exists.js';
+import isMyWorkSite from '../domain/helpers/is-my-work-site.js ';
 import { getPool } from '../db/pool.js';
 import AppError from '../utils/app-error.js';
 import parseTimeToMinutes from '../utils/parse-time-to-minutes.js';
-
-const _allowQuery = async (userId, workSiteId, client) => {
-  if (!workSiteId) return false;
-
-  const userWorkSites = await WorkSite.findMyWorkSites(userId, null, client);
-  const userWorkSitesIds = userWorkSites.map(ws => ws.id);
-  return userWorkSitesIds.includes(workSiteId);
-};
 
 export const getTimeEntry = async id => {
   return timeEntryExists(id);
@@ -31,7 +23,7 @@ export const getTimeEntriesBy = async (user, workSiteId, companyId, period) => {
     await client.query('BEGIN');
 
     if (user.role !== 'admin') {
-      const isAllowed = await _allowQuery(user.id, workSiteId, client);
+      const isAllowed = await isMyWorkSite(user.id, workSiteId, client);
       if (!isAllowed)
         throw new AppError(
           403,

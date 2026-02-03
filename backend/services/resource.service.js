@@ -14,7 +14,7 @@ export const getResource = async id => {
 };
 
 export const getWorkerVacations = async (id, period) => {
-  const vacations = await Vacation.getWorkerVacations(id, period);
+  const vacations = await Vacation.getAllVacations(id, null, period);
 
   if (!vacations) {
     throw new AppError(400, 'Este trabajador no tiene registradas vacaciones.');

@@ -1,13 +1,30 @@
 import { getPool } from '../db/pool.js';
 
-export const getAllCategories = async (client = getPool()) => {
+export const getAllCategories = async (filters, client = getPool()) => {
+  const { companyId, globalCategories } = filters;
+  const conditions = [];
+  const values = [];
+
+  if (companyId) {
+    conditions.push(`g.company_id = $${values.length + 1}`);
+    values.push(companyId);
+  }
+  if (globalCategories) {
+    conditions.push(`g.company_id IS NULL`);
+  }
+  const whereClause = conditions.length
+    ? `WHERE ${conditions.join(' OR ')}`
+    : '';
+
   const { rows } = await client.query(
     `
     SELECT g.id, g.name, g.company_id, c.name AS company_name
     FROM categories g
     LEFT JOIN companies c ON g.company_id = c.id
-    ORDER BY g.company_id ASC NULLS FIRST, g.name ASC
+    ${whereClause}
+    ORDER BY c.name ASC NULLS FIRST, g.name ASC
     `,
+    values,
   );
 
   return rows;

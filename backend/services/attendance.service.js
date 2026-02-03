@@ -1,19 +1,11 @@
 import * as CompanyAttendance from '../models/attendance.model.js';
-import * as WorkSite from '../models/work-site.model.js';
-import * as Company from '../models/company.model.js';
+
 import workSiteExists from '../domain/assertions/work-site-exists.js';
 import companyExists from '../domain/assertions/company-exists.js';
 import companyAttendanceExists from '../domain/assertions/attendance-exists.js';
+import isMyWorkSite from '../domain/helpers/is-my-work-site.js ';
 import { getPool } from '../db/pool.js';
 import AppError from '../utils/app-error.js';
-
-const _allowQuery = async (userId, workSiteId, client) => {
-  if (!workSiteId) return false;
-
-  const userWorkSites = await WorkSite.findMyWorkSites(userId, null, client);
-  const userWorkSitesIds = userWorkSites.map(ws => ws.id);
-  return userWorkSitesIds.includes(workSiteId);
-};
 
 export const getCompanyAttendance = async id => {
   return companyAttendanceExists(id);
@@ -31,7 +23,7 @@ export const getCompanyAttendanceBy = async (
     await client.query('BEGIN');
 
     if (user.role !== 'admin') {
-      const isAllowed = await _allowQuery(user.id, workSiteId, client);
+      const isAllowed = await isMyWorkSite(user.id, workSiteId, client);
       if (!isAllowed)
         throw new AppError(
           403,

@@ -1,21 +1,33 @@
 import { getPool } from '../db/pool.js';
 
 export const getAllVacations = async (
+  resourceId,
   onlyActive,
   period,
   client = getPool(),
 ) => {
-  const periodCondition = period
-    ? ` AND v.start_date <= $2::date AND (v.end_date IS NULL OR v.end_date >= $3::date)`
-    : '';
+  const conditions = ['($1::BOOLEAN IS NULL OR r.active = $1)'];
   const values = [onlyActive];
-  if (period) values.push(period.to, period.from);
+
+  if (resourceId) {
+    conditions.push(`v.resource_id = $${values.length + 1}`);
+    values.push(resourceId);
+  }
+  if (period) {
+    conditions.push(
+      `v.start_date <= $${values.length + 1}::date AND (v.end_date IS NULL OR v.end_date >= $${values.length + 2}::date)`,
+    );
+    values.push(period.to, period.from);
+  }
+  const whereClause = conditions.length
+    ? `WHERE ${conditions.join(' AND ')}`
+    : '';
 
   const sql = `
     SELECT v.id, v.resource_id, r.name AS name, v.start_date, v.end_date
     FROM vacations v
     INNER JOIN resources r ON v.resource_id = r.id
-    WHERE ($1::BOOLEAN IS NULL OR r.active = $1)${periodCondition}
+    ${whereClause}
     ORDER BY v.start_date DESC
     `;
 
