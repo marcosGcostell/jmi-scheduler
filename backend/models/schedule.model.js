@@ -1,15 +1,28 @@
 import { getPool } from '../db/pool.js';
 
-export const getAllSchedules = async (
-  onlyActive,
-  period,
-  client = getPool(),
-) => {
-  const periodCondition = period
-    ? ` AND s.valid_from <= $2::date AND (s.valid_to IS NULL OR s.valid_to >= $3::date)`
+export const getAllSchedules = async (filters, client = getPool()) => {
+  const { companyId, onlyActive, period } = filters;
+  const conditions = [];
+  const values = [];
+
+  if (companyId) {
+    conditions.push(`s.company_id = $${values.length + 1}`);
+    values.push(companyId);
+  } else if (onlyActive) {
+    conditions.push(
+      `($${values.length + 1}::BOOLEAN IS NULL OR c.active = $${values.length + 1})`,
+    );
+    values.push(onlyActive);
+  }
+  if (period) {
+    conditions.push(
+      `s.valid_from <= $${values.length + 1}::date AND (s.valid_to IS NULL OR s.valid_to >= $${values.length + 2}::date)`,
+    );
+    values.push(period.to, period.from);
+  }
+  const whereClause = conditions.length
+    ? `WHERE ${conditions.join(' AND ')}`
     : '';
-  const values = [onlyActive];
-  if (period) values.push(period.to, period.from);
 
   const sql = `
     SELECT s.id, s.start_time, s.end_time, s.day_correction_minutes, s.valid_from, s.valid_to,
@@ -19,8 +32,8 @@ export const getAllSchedules = async (
       ) AS company
     FROM main_company_schedules s
     LEFT JOIN companies c ON s.company_id = c.id
-    WHERE ($1::BOOLEAN IS NULL OR c.active = $1)${periodCondition}
-    ORDER BY s.start_time DESC
+    ${whereClause}
+    ORDER BY c.active DESC, c.name ASC, s.start_time DESC
     `;
 
   const { rows } = await client.query(sql, values);
