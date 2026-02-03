@@ -11,12 +11,18 @@ import isMyWorkSite from '../domain/helpers/is-my-work-site.js ';
 import { getPool } from '../db/pool.js';
 import AppError from '../utils/app-error.js';
 import parseTimeToMinutes from '../utils/parse-time-to-minutes.js';
+import getActiveRule from '../domain/helpers/get-active-rule.js';
 
 export const getTimeEntry = async id => {
   return timeEntryExists(id);
 };
 
-export const getTimeEntriesBy = async (user, workSiteId, companyId, period) => {
+export const getAllTimeEntries = async (
+  user,
+  workSiteId,
+  companyId,
+  period,
+) => {
   const client = await getPool().connect();
 
   try {
@@ -30,12 +36,10 @@ export const getTimeEntriesBy = async (user, workSiteId, companyId, period) => {
           'Solo estás autorizado a obtener registros de obras en las que estás asignado.',
         );
     } else if (workSiteId) await workSiteExists(workSiteId, client);
-    if (companyId) await companyExists(companyId, 'regular', client);
+    if (companyId) await companyExists(companyId, null, client);
 
-    const timeEntries = await TimeEntry.getTimeEntriesBy(
-      workSiteId,
-      companyId,
-      period,
+    const timeEntries = await TimeEntry.getAllTimeEntries(
+      { workSiteId, companyId, period },
       client,
     );
 
@@ -71,36 +75,18 @@ export const createTimeEntry = async data => {
     // Get the work rule from resource for this work site
     const resource = await Resource.getResource(resourceId, client);
     const companyIsMain = resource.company.is_main;
-    let appliedRuleId = null;
-    let mainSchedule = null;
 
-    if (!companyIsMain) {
-      const workRules = await WorkRule.getConditionedWorkRules(
-        workSiteId,
-        resource.company.id,
-        { from: workDate, to: workDate },
-        client,
-      );
-      appliedRuleId = workRules.shift()?.id;
-    }
-
-    if (companyIsMain)
-      mainSchedule = await Schedule.getCompanySchedules(
-        resource.company.id,
-        workDate,
-        client,
-      );
-
-    if (companyIsMain && !mainSchedule)
-      throw new AppError(
-        400,
-        'La empresa principal debe tener siempre un horario activo. Avise a un administrador.',
-      );
+    const { appliedRuleId, mainSchedule } = await getActiveRule(
+      resource.company,
+      workSiteId,
+      workDate,
+      client,
+    );
 
     const modelData = {
       workSiteId,
       resourceId,
-      appliedRuleId: appliedRuleId ?? null,
+      appliedRuleId: companyIsMain ? null : (appliedRuleId ?? null),
       workDate,
       startTime: companyIsMain ? mainSchedule.start_time : new Date(startTime),
       endTime: companyIsMain
@@ -113,9 +99,6 @@ export const createTimeEntry = async data => {
     };
 
     if (companyIsMain) {
-      modelData.appliedRuleId = null;
-      modelData.startTime = mainSchedule.start_time;
-      modelData.endTime = mainSchedule.end_time;
       modelData.workedMinutes =
         parseTimeToMinutes(mainSchedule.end_time) -
         parseTimeToMinutes(mainSchedule.start_time) +

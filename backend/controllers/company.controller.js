@@ -34,7 +34,7 @@ export const getCompanyResources = catchAsync(async (req, res, next) => {
   const resources = await companyService.getCompanyResources(
     req.params.id,
     req.active,
-    req.date,
+    req.period,
   );
 
   // Send response

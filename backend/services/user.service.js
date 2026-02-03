@@ -13,8 +13,8 @@ export const getUser = async id => {
   return userExists(id);
 };
 
-export const findMyWorkSites = async (userId, onlyActive) => {
-  const workSites = await WorkSite.findMyWorkSites(userId, onlyActive);
+export const getMyWorkSites = async (userId, onlyActive) => {
+  const workSites = await WorkSite.getAllWorkSites({ userId, onlyActive });
   if (!workSites.length) {
     throw new AppError(400, 'El usuario no tiene obras asignadas.');
   }
@@ -28,7 +28,7 @@ export const createUser = async data => {
 
   try {
     await client.query('BEGIN');
-    const userAlreadyExist = await User.getUserByEmail(
+    const userAlreadyExist = await User.findUser(
       email.toLowerCase().trim(),
       client,
     );

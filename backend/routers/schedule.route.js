@@ -49,11 +49,11 @@ const recordFields = [
 // Routes for logged in users
 router.use(authController.protect);
 
-router.route('/:id').get(scheduleController.getSchedule);
-
 router
   .route('/active')
   .get(filterQuery, filterFieldsQuery, scheduleController.getActiveSchedule);
+
+router.route('/:id').get(scheduleController.getSchedule);
 
 // Routes for admins only
 router.use(authController.restrictTo('admin'));

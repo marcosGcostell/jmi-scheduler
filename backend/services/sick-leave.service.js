@@ -5,7 +5,7 @@ import { getPool } from '../db/pool.js';
 import AppError from '../utils/app-error.js';
 
 export const getAllSickLeaves = async (onlyActive, period) => {
-  return SickLeave.getAllSickLeaves(onlyActive, period);
+  return SickLeave.getAllSickLeaves({ onlyActive, period });
 };
 
 export const getSickLeave = async id => {

@@ -45,6 +45,6 @@ router
   .route('/:id/password')
   .patch(appValidators.validateNewPassword, authController.updateUserPassword);
 
-router.route('/:id/worksites').get(filterQuery, userController.findMyWorkSites);
+router.route('/:id/worksites').get(filterQuery, userController.getMyWorkSites);
 
 export default router;

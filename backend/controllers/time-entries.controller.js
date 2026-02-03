@@ -12,8 +12,8 @@ export const getTimeEntry = catchAsync(async (req, res, next) => {
   });
 });
 
-export const getTimeEntriesBy = catchAsync(async (req, res, next) => {
-  const timeEntries = await timeEntryService.getTimeEntriesBy(
+export const getAllTimeEntries = catchAsync(async (req, res, next) => {
+  const timeEntries = await timeEntryService.getAllTimeEntries(
     req.user,
     req.workSiteId,
     req.companyId,

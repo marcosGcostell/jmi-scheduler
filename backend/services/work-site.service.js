@@ -4,7 +4,7 @@ import { getPool } from '../db/pool.js';
 import AppError from '../utils/app-error.js';
 
 export const getAllWorkSites = async onlyActive => {
-  return WorkSite.getAllWorkSites(onlyActive);
+  return WorkSite.getAllWorkSites({ onlyActive });
 };
 
 export const getWorkSite = async id => {
@@ -17,7 +17,7 @@ export const createWorkSite = async data => {
 
   try {
     await client.query('BEGIN');
-    const WorkSiteAlreadyExist = await WorkSite.getWorkSiteByCode(
+    const WorkSiteAlreadyExist = await WorkSite.findWorkSite(
       code?.trim(),
       client,
     );

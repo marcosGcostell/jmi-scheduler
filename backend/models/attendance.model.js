@@ -1,11 +1,7 @@
 import { getPool } from '../db/pool.js';
 
-export const getCompanyAttendanceBy = async (
-  workSiteId,
-  companyId,
-  period,
-  client = getPool(),
-) => {
+export const getAllAttendances = async (filters, client = getPool()) => {
+  const { workSiteId, companyId, period } = filters;
   const conditions = [];
   const values = [];
 
@@ -50,7 +46,7 @@ export const getCompanyAttendanceBy = async (
   return rows;
 };
 
-export const getCompanyAttendance = async (id, client = getPool()) => {
+export const getAttendance = async (id, client = getPool()) => {
   const { rows } = await client.query(
     `
     SELECT ca.id, ca.date, ca.workers_count, ca.created_by,
@@ -73,7 +69,7 @@ export const getCompanyAttendance = async (id, client = getPool()) => {
   return rows[0];
 };
 
-export const createCompanyAttendance = async (data, client = getPool()) => {
+export const createAttendance = async (data, client = getPool()) => {
   try {
     const { workSiteId, companyId, date, workersCount, userId } = data;
 
@@ -89,7 +85,7 @@ export const createCompanyAttendance = async (data, client = getPool()) => {
     const attendance = rows[0];
 
     // Fetch full data with joins
-    const fullAttendance = await getCompanyAttendance(attendance.id, client);
+    const fullAttendance = await getAttendance(attendance.id, client);
 
     return fullAttendance;
   } catch (err) {
@@ -97,7 +93,7 @@ export const createCompanyAttendance = async (data, client = getPool()) => {
   }
 };
 
-export const updateCompanyAttendance = async (id, data, client = getPool()) => {
+export const updateAttendance = async (id, data, client = getPool()) => {
   try {
     const { workersCount } = data;
 
@@ -114,7 +110,7 @@ export const updateCompanyAttendance = async (id, data, client = getPool()) => {
     const attendance = rows[0];
 
     // Fetch full data with joins
-    const fullAttendance = await getCompanyAttendance(attendance.id, client);
+    const fullAttendance = await getAttendance(attendance.id, client);
 
     return fullAttendance;
   } catch (err) {
@@ -122,7 +118,7 @@ export const updateCompanyAttendance = async (id, data, client = getPool()) => {
   }
 };
 
-export const deleteCompanyAttendance = async (id, client = getPool()) => {
+export const deleteAttendance = async (id, client = getPool()) => {
   const { rowCount, rows } = await client.query(
     `
     DELETE 

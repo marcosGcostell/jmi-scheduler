@@ -42,7 +42,7 @@ router.use(authController.protect);
 
 router
   .route('/')
-  .get(filterQuery, filterFieldsQuery, timeEntryController.getTimeEntriesBy)
+  .get(filterQuery, filterFieldsQuery, timeEntryController.getAllTimeEntries)
   .post(checkRecordFields(recordFields), timeEntryController.createTimeEntry);
 
 router

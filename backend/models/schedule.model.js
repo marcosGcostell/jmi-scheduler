@@ -8,10 +8,9 @@ export const getAllSchedules = async (filters, client = getPool()) => {
   if (companyId) {
     conditions.push(`s.company_id = $${values.length + 1}`);
     values.push(companyId);
-  } else if (onlyActive) {
-    conditions.push(
-      `($${values.length + 1}::BOOLEAN IS NULL OR c.active = $${values.length + 1})`,
-    );
+  }
+  if (onlyActive) {
+    conditions.push(`c.active = $${values.length + 1}`);
     values.push(onlyActive);
   }
   if (period) {

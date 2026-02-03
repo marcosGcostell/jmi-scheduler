@@ -23,7 +23,7 @@ export const getUser = async (id, client = getPool()) => {
   return rows[0];
 };
 
-export const getUserByEmail = async (email, client = getPool()) => {
+export const findUser = async (email, client = getPool()) => {
   const { rows } = await client.query(
     `
     SELECT id, email, full_name, role, active

@@ -24,7 +24,6 @@
 - PATCH `/api/v1/companies/:id`
 - GET `/api/v1/companies/:id/resources`
 - GET `/api/v1/companies/:id/categories`
-- GET `/api/v1/companies/:id/schedules`
 - DELETE `/api/v1/companies/:id` (admin)
 
 ## Categories
@@ -48,6 +47,7 @@
 ## Schedules
 
 - GET `/api/v1/schedules/:id`
+- GET `/api/v1/schedules/active`
 - GET `/api/v1/schedules/` (admin)
 - POST `/api/v1/schedules/` (admin)
 - PATCH `/api/v1/schedules/:id` (admin)

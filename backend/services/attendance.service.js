@@ -7,11 +7,11 @@ import isMyWorkSite from '../domain/helpers/is-my-work-site.js ';
 import { getPool } from '../db/pool.js';
 import AppError from '../utils/app-error.js';
 
-export const getCompanyAttendance = async id => {
+export const getAttendance = async id => {
   return companyAttendanceExists(id);
 };
 
-export const getCompanyAttendanceBy = async (
+export const getAllAttendances = async (
   user,
   workSiteId,
   companyId,
@@ -32,10 +32,8 @@ export const getCompanyAttendanceBy = async (
     } else if (workSiteId) await workSiteExists(workSiteId, client);
     if (companyId) await companyExists(companyId, 'regular', client);
 
-    const attendances = await CompanyAttendance.getCompanyAttendanceBy(
-      workSiteId,
-      companyId,
-      period,
+    const attendances = await CompanyAttendance.getAllAttendances(
+      { workSiteId, companyId, period },
       client,
     );
 
@@ -49,7 +47,7 @@ export const getCompanyAttendanceBy = async (
   }
 };
 
-export const createCompanyAttendance = async data => {
+export const createAttendance = async data => {
   const client = await getPool().connect();
 
   try {
@@ -76,7 +74,7 @@ export const createCompanyAttendance = async data => {
       userId,
     };
 
-    const attendance = await CompanyAttendance.createCompanyAttendance(
+    const attendance = await CompanyAttendance.createAttendance(
       modelData,
       client,
     );
@@ -91,7 +89,7 @@ export const createCompanyAttendance = async data => {
   }
 };
 
-export const updateCompanyAttendance = async (id, data) => {
+export const updateAttendance = async (id, data) => {
   const client = await getPool().connect();
 
   try {
@@ -104,7 +102,7 @@ export const updateCompanyAttendance = async (id, data) => {
       workersCount,
     };
 
-    const attendance = await CompanyAttendance.updateCompanyAttendance(
+    const attendance = await CompanyAttendance.updateAttendance(
       id,
       modelData,
       client,
@@ -120,8 +118,8 @@ export const updateCompanyAttendance = async (id, data) => {
   }
 };
 
-export const deleteCompanyAttendance = async id => {
-  const attendance = await CompanyAttendance.deleteCompanyAttendance(id);
+export const deleteAttendance = async id => {
+  const attendance = await CompanyAttendance.deleteAttendance(id);
   if (!attendance) {
     throw new AppError(400, 'No se encuentra este registro de asistencia.');
   }

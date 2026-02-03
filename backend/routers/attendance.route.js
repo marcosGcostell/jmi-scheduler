@@ -27,16 +27,16 @@ router
   .get(
     filterQuery,
     filterFieldsQuery,
-    companyAttendanceController.getCompanyAttendanceBy,
+    companyAttendanceController.getAllAttendances,
   )
   .post(
     checkRecordFields(recordFields),
-    companyAttendanceController.createCompanyAttendance,
+    companyAttendanceController.createAttendance,
   );
 
 router
   .route('/:id')
-  .get(companyAttendanceController.getCompanyAttendance)
+  .get(companyAttendanceController.getAttendance)
   .patch(
     checkRecordFields(
       [
@@ -49,8 +49,8 @@ router
       ],
       { exclude: ['all'] },
     ),
-    companyAttendanceController.updateCompanyAttendance,
+    companyAttendanceController.updateAttendance,
   )
-  .delete(companyAttendanceController.deleteCompanyAttendance);
+  .delete(companyAttendanceController.deleteAttendance);
 
 export default router;
