@@ -6,7 +6,7 @@ import { getPool } from '../db/pool.js';
 import AppError from '../utils/app-error.js';
 
 export const getAllResources = async onlyActive => {
-  return Resource.getAllResources(onlyActive);
+  return Resource.getAllResources({ onlyActive });
 };
 
 export const getResource = async id => {
@@ -14,7 +14,7 @@ export const getResource = async id => {
 };
 
 export const getWorkerVacations = async (id, period) => {
-  const vacations = await Vacation.getWorkerVacations(id, period);
+  const vacations = await Vacation.getAllVacations({ resourceId: id, period });
 
   if (!vacations) {
     throw new AppError(400, 'Este trabajador no tiene registradas vacaciones.');
@@ -24,7 +24,10 @@ export const getWorkerVacations = async (id, period) => {
 };
 
 export const getWorkerSickLeaves = async (id, period) => {
-  const sickLeaves = await SickLeave.getWorkerSickLeaves(id, period);
+  const sickLeaves = await SickLeave.getAllSickLeaves({
+    resourceId: id,
+    period,
+  });
 
   if (!sickLeaves) {
     throw new AppError(400, 'Este trabajador no tiene registradas bajas.');

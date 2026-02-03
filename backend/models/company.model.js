@@ -27,7 +27,7 @@ export const getCompany = async (id, client = getPool()) => {
   return rows[0];
 };
 
-export const getCompanyByName = async (name, client = getPool()) => {
+export const findCompany = async (name, client = getPool()) => {
   const { rows } = await client.query(
     `
     SELECT id, name, is_main, active

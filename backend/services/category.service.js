@@ -4,8 +4,8 @@ import categoryExists from '../domain/assertions/category-exists.js';
 import { getPool } from '../db/pool.js';
 import AppError from '../utils/app-error.js';
 
-export const getAllCategories = async () => {
-  return Category.getAllCategories();
+export const getAllCategories = async selectGlobal => {
+  return Category.getAllCategories({ selectGlobal });
 };
 
 export const getCategory = async id => {

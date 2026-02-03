@@ -13,27 +13,21 @@ export const getCompany = async id => {
   return companyExists(id);
 };
 
-export const getCompanyResources = async (id, onlyActive, date) => {
+export const getCompanyResources = async (id, onlyActive, period) => {
   const client = await getPool().connect();
 
   try {
     await client.query('BEGIN');
     const company = await companyExists(id, null, client);
 
-    if (company.is_main && date) {
-      return Resource.getCompanyResourcesWithStatus(
-        id,
-        onlyActive,
-        date,
-        client,
-      );
-    }
-
-    const resources = await Resource.getCompanyResources(
-      id,
+    const filters = {
+      companyId: id,
       onlyActive,
-      client,
-    );
+      status: company.is_main && period,
+      period,
+    };
+
+    const resources = await Resource.getAllResources(filters, client);
 
     if (!resources.length) {
       throw new AppError(400, 'La empresa no tiene trabajadores.');
@@ -49,8 +43,11 @@ export const getCompanyResources = async (id, onlyActive, date) => {
   }
 };
 
-export const getCompanyCategories = async (id, plusGlobal) => {
-  const categories = await Category.getCompanyCategories(id, plusGlobal);
+export const getCompanyCategories = async (id, selectGlobal) => {
+  const categories = await Category.getAllCategories({
+    companyId: id,
+    selectGlobal,
+  });
 
   if (!categories) {
     throw new AppError(
@@ -67,10 +64,7 @@ export const createCompany = async name => {
 
   try {
     await client.query('BEGIN');
-    const companyAlreadyExist = await Company.getCompanyByName(
-      name.trim(),
-      client,
-    );
+    const companyAlreadyExist = await Company.findCompany(name.trim(), client);
 
     if (companyAlreadyExist?.id) {
       throw new AppError(400, 'Ya hay un empresa registrada con este nombre');

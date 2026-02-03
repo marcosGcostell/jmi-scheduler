@@ -1,6 +1,34 @@
 import { getPool } from '../db/pool.js';
 
-export const getAllResources = async (onlyActive, client = getPool()) => {
+export const getAllResources = async (filters, client = getPool()) => {
+  const { companyId, onlyActive, status, period } = filters;
+  const conditions = [];
+  const values = [];
+  let statusClause = '';
+
+  if (status && period) {
+    statusClause = `
+      LEFT JOIN vacations v
+        ON v.resource_id = r.id
+        AND $1 BETWEEN v.start_date AND v.end_date
+      LEFT JOIN sick_leaves l
+        ON l.resource_id = r.id
+        AND $1 BETWEEN l.start_date AND l.end_date`;
+    values.push(period.from);
+  }
+  if (companyId) {
+    conditions.push(`r.company_id = $${values.length + 1}`);
+    values.push(companyId);
+  }
+  if (onlyActive) {
+    conditions.push(`r.active = $${values.length + 1}`);
+    values.push(onlyActive);
+  }
+
+  const whereClause = conditions.length
+    ? `WHERE ${conditions.join(' AND ')}`
+    : '';
+
   const { rows } = await client.query(
     `
     SELECT r.id, r.name, r.resource_type, r.active,
@@ -15,10 +43,11 @@ export const getAllResources = async (onlyActive, client = getPool()) => {
     FROM resources r
     LEFT JOIN companies c ON r.company_id = c.id
     LEFT JOIN categories g ON r.category_id = g.id
-    WHERE ($1::BOOLEAN IS NULL OR r.active = $1)
+    ${statusClause}
+    ${whereClause}
     ORDER BY c.is_main DESC NULLS LAST, c.name ASC, r.active DESC, r.name ASC
     `,
-    [onlyActive],
+    values,
   );
 
   return rows;
@@ -46,63 +75,6 @@ export const getResource = async (id, client = getPool()) => {
   );
 
   return rows[0];
-};
-
-export const getCompanyResources = async (
-  companyId,
-  onlyActive,
-  client = getPool(),
-) => {
-  const { rows } = await client.query(
-    `
-    SELECT r.id, r.name, r.resource_type, r.active, c.name AS company,
-      json_build_object(
-        'id', g.id,
-        'name', g.name
-      ) AS category
-    FROM resources r
-    INNER JOIN companies c ON r.company_id = c.id
-    LEFT JOIN categories g ON r.category_id = g.id
-    WHERE r.company_id = $1
-      AND ($2::BOOLEAN IS NULL OR r.active = $2)
-    ORDER BY r.active DESC, r.name ASC
-    `,
-    [companyId, onlyActive],
-  );
-
-  return rows;
-};
-
-export const getCompanyResourcesWithStatus = async (
-  companyId,
-  onlyActive,
-  date,
-  client = getPool(),
-) => {
-  const { rows } = await client.query(
-    `
-    SELECT r.id, r.name, r.resource_type, r.active, c.name AS company,
-      json_build_object(
-        'id', g.id,
-        'name', g.name
-      ) AS category
-    FROM resources r
-    INNER JOIN companies c ON r.company_id = c.id
-    LEFT JOIN categories g ON r.category_id = g.id
-    LEFT JOIN vacations v
-      ON v.resource_id = r.id
-      AND $1 BETWEEN v.start_date AND v.end_date
-    LEFT JOIN sick_leaves l
-      ON l.resource_id = r.id
-      AND $1 BETWEEN l.start_date AND l.end_date
-    WHERE r.company_id = $2
-      AND ($3::BOOLEAN IS NULL OR r.active = $3)
-    ORDER BY r.active DESC, r.name ASC
-    `,
-    [date, companyId, onlyActive],
-  );
-
-  return rows;
 };
 
 export const findResource = async (companyId, name, client = getPool()) => {

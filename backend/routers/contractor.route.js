@@ -1,18 +1,18 @@
 import express from 'express';
 
 import * as authController from '../controllers/auth.controller.js';
-import * as categoryController from '../controllers/category.controller.js';
-import filterQuery from '../middleware/filter-query.js';
+import * as contractorController from '../controllers/contractor.controller.js';
 import { checkRecordFields } from '../middleware/data-validators.js';
+import filterQuery from '../middleware/filter-query.js';
 
 const router = express.Router();
 const requiredFields = [
   { name: 'name', type: 'text', required: true, message: 'Nombre' },
   {
-    name: 'companyId',
-    type: 'id',
+    name: 'fullName',
+    type: 'text',
     required: false,
-    message: 'Empresa a la que pertenece',
+    message: 'Nombre completo',
   },
 ];
 
@@ -21,21 +21,23 @@ router.use(authController.protect);
 
 router
   .route('/')
-  .post(checkRecordFields(requiredFields), categoryController.createCategory);
+  .get(filterQuery, contractorController.getAllContractors)
+  .post(
+    checkRecordFields(requiredFields),
+    contractorController.createContractor,
+  );
 
 router
   .route('/:id')
-  .get(categoryController.getCategory)
+  .get(contractorController.getContractor)
   .patch(
     checkRecordFields(requiredFields, { exclude: ['all'] }),
-    categoryController.updateCategory,
+    contractorController.updateContractor,
   );
 
 // Routes for admins only
 router.use(authController.restrictTo('admin'));
 
-router.route('/').get(filterQuery, categoryController.getAllCategories);
-
-router.route('/:id').delete(categoryController.deleteCategory);
+router.route('/:id').delete(contractorController.deleteContractor);
 
 export default router;

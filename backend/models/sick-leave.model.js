@@ -1,21 +1,33 @@
 import { getPool } from '../db/pool.js';
 
-export const getAllSickLeaves = async (
-  onlyActive,
-  period,
-  client = getPool(),
-) => {
-  const periodCondition = period
-    ? ` AND s.start_date <= $2::date AND (s.end_date IS NULL OR s.end_date >= $3::date)`
+export const getAllSickLeaves = async (filters, client = getPool()) => {
+  const { resourceId, onlyActive, period } = filters;
+  const conditions = [];
+  const values = [];
+
+  if (resourceId) {
+    conditions.push(`s.resource_id = $${values.length + 1}`);
+    values.push(resourceId);
+  }
+  if (onlyActive) {
+    conditions.push(`r.active = $${values.length + 1}`);
+    values.push(onlyActive);
+  }
+  if (period) {
+    conditions.push(
+      `s.start_date <= $${values.length + 1}::date AND (s.end_date IS NULL OR s.end_date >= $${values.length + 2}::date)`,
+    );
+    values.push(period.to, period.from);
+  }
+  const whereClause = conditions.length
+    ? `WHERE ${conditions.join(' AND ')}`
     : '';
-  const values = [onlyActive];
-  if (period) values.push(period.to, period.from);
 
   const sql = `
     SELECT s.id, s.resource_id, r.name AS name, s.start_date, s.end_date
     FROM sick_leaves s
     INNER JOIN resources r ON s.resource_id = r.id
-    WHERE ($1::BOOLEAN IS NULL OR r.active = $1)${periodCondition}
+    ${whereClause}
     ORDER BY s.start_date DESC
     `;
 
@@ -36,29 +48,6 @@ export const getSickLeave = async (id, client = getPool()) => {
   );
 
   return rows[0];
-};
-
-export const getWorkerSickLeaves = async (
-  resourceId,
-  period,
-  client = getPool(),
-) => {
-  const periodCondition = period
-    ? ` AND s.start_date <= $2::date AND (s.end_date IS NULL OR s.end_date >= $3::date)`
-    : '';
-  const values = [resourceId];
-  if (period) values.push(period.to, period.from);
-
-  const sql = `
-    SELECT s.id, s.resource_id, r.name AS name, s.start_date, s.end_date
-    FROM sick_leaves s
-    INNER JOIN resources r ON s.resource_id = r.id
-    WHERE s.resource_id = $1${periodCondition}
-    `;
-
-  const { rows } = await client.query(sql, values);
-
-  return rows;
 };
 
 export const createSickLeave = async (data, client = getPool()) => {

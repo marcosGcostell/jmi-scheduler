@@ -155,7 +155,7 @@ export const updateUserPassword = async (userId, data) => {
 export const saveUserResetCode = async email => {
   if (!email) throw new AppError(400, 'Por favor, introduzca su email.');
 
-  const user = await User.getUserByEmail(email.toLowerCase().trim());
+  const user = await User.findUser(email.toLowerCase().trim());
   if (!user)
     throw new AppError(
       400,

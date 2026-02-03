@@ -5,7 +5,7 @@ import { getPool } from '../db/pool.js';
 import AppError from '../utils/app-error.js';
 
 export const getAllVacations = async (onlyActive, period) => {
-  return Vacation.getAllVacations(onlyActive, period);
+  return Vacation.getAllVacations({ onlyActive, period });
 };
 
 export const getVacation = async id => {

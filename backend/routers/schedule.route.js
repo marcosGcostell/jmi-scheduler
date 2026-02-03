@@ -4,6 +4,7 @@ import * as authController from '../controllers/auth.controller.js';
 import * as scheduleController from '../controllers/schedule.controller.js';
 import { checkRecordFields } from '../middleware/data-validators.js';
 import filterQuery from '../middleware/filter-query.js';
+import filterFieldsQuery from '../middleware/filter-fields-query.js';
 
 const router = express.Router();
 const recordFields = [
@@ -48,6 +49,10 @@ const recordFields = [
 // Routes for logged in users
 router.use(authController.protect);
 
+router
+  .route('/active')
+  .get(filterQuery, filterFieldsQuery, scheduleController.getActiveSchedule);
+
 router.route('/:id').get(scheduleController.getSchedule);
 
 // Routes for admins only
@@ -55,7 +60,7 @@ router.use(authController.restrictTo('admin'));
 
 router
   .route('/')
-  .get(filterQuery, scheduleController.getAllSchedules)
+  .get(filterQuery, filterFieldsQuery, scheduleController.getAllSchedules)
   .post(checkRecordFields(recordFields), scheduleController.createSchedule);
 
 router

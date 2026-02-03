@@ -1,6 +1,6 @@
 // App config
 export const APP_LOGO = 'https://jmiobras.com/assets/img/logo_standard.svg';
-export const RESOURCE_TYPES = ['person', 'machine', 'vehicle'];
+export const RESOURCE_TYPES = ['person', 'equipment'];
 export const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 export const TIME_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;

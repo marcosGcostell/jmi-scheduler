@@ -38,7 +38,23 @@ const _getFullWorkSite = async (workSiteId, client) => {
   return rows[0];
 };
 
-export const getAllWorkSites = async (onlyActive, client = getPool()) => {
+export const getAllWorkSites = async (filters, client = getPool()) => {
+  const { userId, onlyActive } = filters;
+  const conditions = [];
+  const values = [];
+
+  if (userId) {
+    conditions.push(`uw.user_id = $${values.length + 1}`);
+    values.push(userId);
+  }
+  if (onlyActive) {
+    conditions.push(`w.is_open = $${values.length + 1}`);
+    values.push(onlyActive);
+  }
+  const whereClause = conditions.length
+    ? `WHERE ${conditions.join(' AND ')}`
+    : '';
+
   const { rows } = await client.query(
     `
     SELECT w.id, w.name, w.code, w.is_open, w.start_date, w.end_date,
@@ -54,17 +70,17 @@ export const getAllWorkSites = async (onlyActive, client = getPool()) => {
     FROM work_sites w
     LEFT JOIN user_work_sites uw ON uw.work_site_id = w.id
     LEFT JOIN users u ON u.id = uw.user_id 
-    WHERE ($1::BOOLEAN IS NULL OR w.is_open = $1)
+    ${whereClause}
     GROUP BY w.id, w.name, w.code, w.is_open, w.start_date, w.end_date
     ORDER BY w.start_date DESC NULLS LAST, w.name ASC
     `,
-    [onlyActive],
+    values,
   );
 
   return rows;
 };
 
-export const findMyWorkSites = async (
+export const getMyWorkSites = async (
   userId,
   onlyActive = null,
   client = getPool(),
@@ -97,7 +113,7 @@ export const findMyWorkSites = async (
 export const getWorkSite = async (id, client = getPool()) =>
   _getFullWorkSite(id, client);
 
-export const getWorkSiteByCode = async (code, client = getPool()) => {
+export const findWorkSite = async (code, client = getPool()) => {
   const { rows } = await client.query(
     `
     SELECT w.id, w.name, w.code, w.is_open, w.start_date, w.end_date,

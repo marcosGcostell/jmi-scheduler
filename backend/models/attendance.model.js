@@ -1,11 +1,7 @@
 import { getPool } from '../db/pool.js';
 
-export const getCompanyAttendanceBy = async (
-  workSiteId,
-  companyId,
-  period,
-  client = getPool(),
-) => {
+export const getAllAttendances = async (filters, client = getPool()) => {
+  const { workSiteId, contractorId, period } = filters;
   const conditions = [];
   const values = [];
 
@@ -13,13 +9,13 @@ export const getCompanyAttendanceBy = async (
     conditions.push(`ca.work_site_id = $${values.length + 1}`);
     values.push(workSiteId);
   }
-  if (companyId) {
-    conditions.push(`ca.company_id = $${values.length + 1}`);
-    values.push(companyId);
+  if (contractorId) {
+    conditions.push(`ca.contractor_id = $${values.length + 1}`);
+    values.push(contractorId);
   }
   if (period) {
     conditions.push(
-      `ca.date BETWEEN $${values.length + 1}::date AND $${values.length + 2}::date`,
+      `ca.work_date BETWEEN $${values.length + 1}::date AND $${values.length + 2}::date`,
     );
     values.push(period.from, period.to);
   }
@@ -29,7 +25,7 @@ export const getCompanyAttendanceBy = async (
     : '';
 
   const sql = `
-    SELECT ca.id, ca.date, ca.workers_count, ca.created_by, 
+    SELECT ca.id, ca.work_date, ca.workers_count, 
       json_build_object(
         'id', w.id,
         'name', w.name
@@ -37,12 +33,12 @@ export const getCompanyAttendanceBy = async (
       json_build_object(
         'id', c.id,
         'name', c.name
-      ) AS company
-    FROM company_attendance ca
+      ) AS contractor
+    FROM contractor_attendance ca
     LEFT JOIN work_sites w ON ca.work_site_id = w.id
-    LEFT JOIN companies c ON ca.company_id = c.id
+    LEFT JOIN contractors c ON ca.contractor_id = c.id
     ${whereClause}
-    ORDER BY ca.date DESC, w.name ASC, c.name ASC
+    ORDER BY ca.work_date DESC, w.name ASC, c.name ASC
   `;
 
   const { rows } = await client.query(sql, values);
@@ -50,10 +46,10 @@ export const getCompanyAttendanceBy = async (
   return rows;
 };
 
-export const getCompanyAttendance = async (id, client = getPool()) => {
+export const getAttendance = async (id, client = getPool()) => {
   const { rows } = await client.query(
     `
-    SELECT ca.id, ca.date, ca.workers_count, ca.created_by,
+    SELECT ca.id, ca.work_date, ca.workers_count,
       json_build_object(
         'id', w.id,
         'name', w.name
@@ -61,10 +57,10 @@ export const getCompanyAttendance = async (id, client = getPool()) => {
       json_build_object(
         'id', c.id,
         'name', c.name
-      ) AS company
-    FROM company_attendance ca
+      ) AS contractor
+    FROM contractor_attendance ca
     LEFT JOIN work_sites w ON ca.work_site_id = w.id
-    LEFT JOIN companies c ON ca.company_id = c.id
+    LEFT JOIN contractors c ON ca.contractor_id = c.id
     WHERE ca.id = $1
     `,
     [id],
@@ -73,23 +69,23 @@ export const getCompanyAttendance = async (id, client = getPool()) => {
   return rows[0];
 };
 
-export const createCompanyAttendance = async (data, client = getPool()) => {
+export const createAttendance = async (data, client = getPool()) => {
   try {
-    const { workSiteId, companyId, date, workersCount, userId } = data;
+    const { workSiteId, contractorId, workDate, workersCount } = data;
 
     const { rows } = await client.query(
       `
-      INSERT INTO company_attendance (work_site_id, company_id, date, workers_count, created_by)
-      VALUES ($1, $2, $3::date, $4, $5)
-      RETURNING id, work_site_id, company_id, date, workers_count, created_by, created_at
+      INSERT INTO contractor_attendance (work_site_id, contractor_id, work_date, workers_count)
+      VALUES ($1, $2, $3::date, $4)
+      RETURNING id, work_site_id, contractor_id, work_date, workers_count
       `,
-      [workSiteId, companyId, date, workersCount, userId],
+      [workSiteId, contractorId, workDate, workersCount],
     );
 
     const attendance = rows[0];
 
     // Fetch full data with joins
-    const fullAttendance = await getCompanyAttendance(attendance.id, client);
+    const fullAttendance = await getAttendance(attendance.id, client);
 
     return fullAttendance;
   } catch (err) {
@@ -97,16 +93,16 @@ export const createCompanyAttendance = async (data, client = getPool()) => {
   }
 };
 
-export const updateCompanyAttendance = async (id, data, client = getPool()) => {
+export const updateAttendance = async (id, data, client = getPool()) => {
   try {
     const { workersCount } = data;
 
     const { rows } = await client.query(
       `
-      UPDATE company_attendance
+      UPDATE contractor_attendance
       SET workers_count = $1
       WHERE id = $2
-      RETURNING id, work_site_id, company_id, date, workers_count, created_by, created_at
+      RETURNING id, work_site_id, contractor_id, work_date, workers_count
       `,
       [workersCount, id],
     );
@@ -114,7 +110,7 @@ export const updateCompanyAttendance = async (id, data, client = getPool()) => {
     const attendance = rows[0];
 
     // Fetch full data with joins
-    const fullAttendance = await getCompanyAttendance(attendance.id, client);
+    const fullAttendance = await getAttendance(attendance.id, client);
 
     return fullAttendance;
   } catch (err) {
@@ -122,11 +118,11 @@ export const updateCompanyAttendance = async (id, data, client = getPool()) => {
   }
 };
 
-export const deleteCompanyAttendance = async (id, client = getPool()) => {
+export const deleteAttendance = async (id, client = getPool()) => {
   const { rowCount, rows } = await client.query(
     `
     DELETE 
-    FROM company_attendance
+    FROM contractor_attendance
     WHERE id = $1
     RETURNING id
     `,

@@ -5,6 +5,7 @@ import catchAsync from '../utils/catch-async.js';
 export const getAllSchedules = catchAsync(async (req, res, next) => {
   // Execute the query
   const schedule = await scheduleService.getAllSchedules(
+    req.companyId,
     req.active,
     req.period,
   );
@@ -32,20 +33,18 @@ export const getSchedule = catchAsync(async (req, res, next) => {
   });
 });
 
-export const getCompanySchedules = catchAsync(async (req, res, next) => {
+export const getActiveSchedule = catchAsync(async (req, res, next) => {
   // Execute the query
-  const schedules = await scheduleService.getCompanySchedules(
-    req.params.id,
+  const schedule = await scheduleService.getActiveSchedule(
+    req.companyId,
     req.period,
-    req.date,
   );
 
   // Send response
   res.status(200).json({
     status: 'success',
-    results: schedules.length,
     data: {
-      schedules,
+      schedule,
     },
   });
 });

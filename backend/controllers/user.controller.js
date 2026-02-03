@@ -75,12 +75,9 @@ export const deleteUser = catchAsync(async (req, res, next) => {
   });
 });
 
-export const findMyWorkSites = catchAsync(async (req, res, next) => {
+export const getMyWorkSites = catchAsync(async (req, res, next) => {
   // Execute the query
-  const workSites = await userService.findMyWorkSites(
-    req.params.id,
-    req.active,
-  );
+  const workSites = await userService.getMyWorkSites(req.params.id, req.active);
 
   // Send response
   res.status(200).json({

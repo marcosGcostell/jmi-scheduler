@@ -1,11 +1,7 @@
 import { getPool } from '../db/pool.js';
 
-export const getTimeEntriesBy = async (
-  workSiteId,
-  companyId,
-  period,
-  client = getPool(),
-) => {
+export const getAllTimeEntries = async (filters, client = getPool()) => {
+  const { workSiteId, companyId, period } = filters;
   const conditions = [];
   const values = [];
 

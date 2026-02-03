@@ -34,7 +34,7 @@ export const getCompanyResources = catchAsync(async (req, res, next) => {
   const resources = await companyService.getCompanyResources(
     req.params.id,
     req.active,
-    req.date,
+    req.period,
   );
 
   // Send response
@@ -50,7 +50,7 @@ export const getCompanyCategories = catchAsync(async (req, res, next) => {
   // Execute the query
   const categories = await companyService.getCompanyCategories(
     req.params.id,
-    req.extended,
+    req.global,
   );
 
   // Send response

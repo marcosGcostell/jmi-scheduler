@@ -6,7 +6,7 @@ import { getPool } from '../db/pool.js';
 import AppError from '../utils/app-error.js';
 
 export const getAllWorkRules = async (onlyActive, period) => {
-  return WorkRule.getAllWorkRules(onlyActive, period);
+  return WorkRule.getAllWorkRules({ onlyActive, period });
 };
 
 export const getWorkRule = async id => {
@@ -21,10 +21,8 @@ export const resolveGetWorkRules = async (workSiteId, companyId, period) => {
     if (workSiteId) await workSiteExists(workSiteId, client);
     if (companyId) await companyExists(companyId, 'regular', client);
 
-    const workRules = await WorkRule.getConditionedWorkRules(
-      workSiteId,
-      companyId,
-      period,
+    const workRules = await WorkRule.getAllWorkRules(
+      { workSiteId, companyId, period },
       client,
     );
 

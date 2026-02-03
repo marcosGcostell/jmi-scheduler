@@ -4,29 +4,28 @@ import companyExists from '../domain/assertions/company-exists.js';
 import { getPool } from '../db/pool.js';
 import AppError from '../utils/app-error.js';
 
-export const getAllSchedules = async (onlyActive, period) => {
-  return Schedule.getAllSchedules(onlyActive, period);
+export const getAllSchedules = async (companyId, onlyActive, period) => {
+  return Schedule.getAllSchedules({ companyId, onlyActive, period });
 };
 
 export const getSchedule = async id => {
   return scheduleExists(id);
 };
 
-export const getCompanySchedules = async (companyId, period, date) => {
+export const getActiveSchedule = async (companyId, period) => {
   const client = await getPool().connect();
 
   try {
     await client.query('BEGIN');
     await companyExists(companyId, 'main', client);
 
-    const schedules = await Schedule.getCompanySchedules(
-      companyId,
-      date,
+    const schedules = await Schedule.getAllSchedules(
+      { companyId, onlyActive: false, period },
       client,
     );
 
     await client.query('COMMIT');
-    return schedules;
+    return schedules[0] || null;
   } catch (err) {
     await client.query('ROLLBACK');
     throw err;
