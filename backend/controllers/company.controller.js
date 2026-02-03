@@ -50,7 +50,7 @@ export const getCompanyCategories = catchAsync(async (req, res, next) => {
   // Execute the query
   const categories = await companyService.getCompanyCategories(
     req.params.id,
-    req.extended,
+    req.global,
   );
 
   // Send response

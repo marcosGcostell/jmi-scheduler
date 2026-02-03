@@ -49,8 +49,11 @@ export const getCompanyResources = async (id, onlyActive, date) => {
   }
 };
 
-export const getCompanyCategories = async (id, plusGlobal) => {
-  const categories = await Category.getCompanyCategories(id, plusGlobal);
+export const getCompanyCategories = async (id, selectGlobal) => {
+  const categories = await Category.getAllCategories({
+    companyId: id,
+    selectGlobal,
+  });
 
   if (!categories) {
     throw new AppError(

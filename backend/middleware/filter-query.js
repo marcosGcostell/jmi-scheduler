@@ -7,7 +7,7 @@ import validateDate from '../domain/validators/validate-date.js';
 import todayDateString from '../domain/helpers/today-date-string.js';
 
 export default catchAsync(async (req, res, next) => {
-  const { active, date, from, to, sort, extended } = { ...qs.parse(req.query) };
+  const { active, date, from, to, sort, global } = { ...qs.parse(req.query) };
 
   req.active = parseBooleanQuery(active, true);
   if (date && validateDate(new Date(date))) {
@@ -23,7 +23,7 @@ export default catchAsync(async (req, res, next) => {
 
   if (sort) req.sort = parseSort(sort);
 
-  if (extended) req.extended = true;
+  if (global) req.global = true;
 
   next();
 });
