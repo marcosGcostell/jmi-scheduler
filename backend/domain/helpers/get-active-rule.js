@@ -7,10 +7,12 @@ export default async (company, workSiteId, workDate, client) => {
   let mainSchedule = null;
 
   if (!companyIsMain) {
-    const workRules = await WorkRule.getConditionedWorkRules(
-      workSiteId,
-      company.id,
-      { from: workDate, to: workDate },
+    const workRules = await WorkRule.getAllWorkRules(
+      {
+        workSiteId,
+        companyId: company.id,
+        period: { from: workDate, to: workDate },
+      },
       client,
     );
     appliedRuleId = workRules.shift()?.id;

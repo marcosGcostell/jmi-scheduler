@@ -142,22 +142,6 @@ CREATE TABLE time_entries (
   CHECK (end_time IS NULL OR end_time > start_time)
 );
 
-CREATE TABLE company_attendance (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-
-  work_site_id UUID NOT NULL REFERENCES work_sites(id),
-  company_id   UUID NOT NULL REFERENCES companies(id),
-
-  date DATE NOT NULL,
-  workers_count INTEGER NOT NULL CHECK (workers_count > 0),
-
-  created_by UUID NOT NULL REFERENCES users(id),
-  created_at TIMESTAMPTZ DEFAULT now(),
-
-  CONSTRAINT unique_company_day
-    UNIQUE (work_site_id, company_id, date)
-);
-
 CREATE TABLE vacations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
@@ -200,6 +184,35 @@ CREATE TABLE sick_leaves (
     )
 );
 
+CREATE TABLE contractors (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+  name VARCHAR(25) NOT NULL,
+  full_name  TEXT,
+
+  active BOOLEAN NOT NULL DEFAULT true,
+
+  created_at TIMESTAMPTZ DEFAULT now(),
+
+  CONSTRAINT unique_contractor_name
+    UNIQUE (name)
+);
+
+CREATE TABLE contractor_attendance (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+  work_site_id UUID NOT NULL REFERENCES work_sites(id),
+  contractor_id   UUID NOT NULL REFERENCES contractors(id),
+
+  work_date DATE NOT NULL,
+  workers_count INTEGER NOT NULL CHECK (workers_count > 0),
+
+  created_at TIMESTAMPTZ DEFAULT now(),
+
+  CONSTRAINT unique_company_day
+    UNIQUE (work_site_id, contractor_id, work_date)
+);
+
 -- INDEXES
 --
 
@@ -228,6 +241,9 @@ WHERE company_id IS NULL;
 CREATE UNIQUE INDEX idx_uniq_category_company
 ON categories (company_id, name)
 WHERE company_id IS NOT NULL;
+
+-- Search for an attendance record on a work site and date
+CREATE INDEX idx_contractor_attendance_worksite_date ON contractor_attendance (work_site_id, work_date);
 
 
 -- FUNCTIONS / TRIGGERS

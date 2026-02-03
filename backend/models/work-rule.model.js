@@ -1,15 +1,33 @@
 import { getPool } from '../db/pool.js';
 
-export const getAllWorkRules = async (
-  onlyActive,
-  period,
-  client = getPool(),
-) => {
-  const periodCondition = period
-    ? ` AND r.valid_from <= $2::date AND (r.valid_to IS NULL OR r.valid_to >= $3::date)`
+export const getAllWorkRules = async (filters, client = getPool()) => {
+  const { workSiteId, companyId, period, onlyActive } = filters;
+  const conditions = [];
+  const whereString = { text: '', count: 0 };
+  const values = [];
+
+  if (workSiteId) {
+    conditions.push(`r.work_site_id = $${values.length + 1}`);
+    values.push(workSiteId);
+  }
+  if (companyId) {
+    conditions.push(`r.company_id = $${values.length + 1}`);
+    values.push(companyId);
+  }
+  if (onlyActive) {
+    conditions.push(`c.active = $${values.length + 1}`);
+    values.push(onlyActive);
+  }
+  if (period) {
+    conditions.push(
+      `r.valid_from <= $${values.length + 1}::date AND (r.valid_to IS NULL OR r.valid_to >= $${values.length + 2}::date)`,
+    );
+    values.push(period.to, period.from);
+  }
+
+  const whereClause = conditions.length
+    ? `WHERE ${conditions.join(' AND ')}`
     : '';
-  const values = [onlyActive];
-  if (period) values.push(period.to, period.from);
 
   const sql = `
     SELECT r.id, r.day_correction_minutes, r.valid_from, r.valid_to,
@@ -24,7 +42,7 @@ export const getAllWorkRules = async (
     FROM work_site_company_rules r
     LEFT JOIN work_sites w ON r.work_site_id = w.id
     LEFT JOIN companies c ON r.company_id = c.id
-    WHERE ($1::BOOLEAN IS NULL OR c.active = $1)${periodCondition}
+    ${whereClause}
     ORDER BY r.valid_from DESC
     `;
 
@@ -54,51 +72,6 @@ export const getWorkRule = async (id, client = getPool()) => {
   );
 
   return rows[0];
-};
-
-export const getConditionedWorkRules = async (
-  workSiteId,
-  companyId,
-  period,
-  client = getPool(),
-) => {
-  const whereString = { text: '', count: 0 };
-  const values = [];
-
-  if (workSiteId) {
-    whereString.text += `r.work_site_id = $${++whereString.count}`;
-    values.push(workSiteId);
-  }
-  if (companyId) {
-    whereString.text += whereString.count ? ' AND ' : '';
-    whereString.text += `r.company_id = $${++whereString.count}`;
-    values.push(companyId);
-  }
-  if (period) {
-    whereString.text += whereString.count ? ' AND ' : '';
-    whereString.text += `r.valid_from <= $${whereString.count + 1}::date AND (r.valid_to IS NULL OR r.valid_to >= $${whereString.count + 2}::date)`;
-    values.push(period.to, period.from);
-  }
-
-  const sql = `
-    SELECT r.id, r.day_correction_minutes, r.valid_from, r.valid_to,
-      json_build_object(
-        'id', w.id,
-        'name', w.name
-      ) AS work_site,
-      json_build_object(
-        'id', c.id,
-        'name', c.name
-      ) AS company
-    FROM work_site_company_rules r
-    LEFT JOIN work_sites w ON r.work_site_id = w.id
-    LEFT JOIN companies c ON r.company_id = c.id
-    WHERE ${whereString.text}
-    `;
-
-  const { rows } = await client.query(sql, values);
-
-  return rows;
 };
 
 export const createWorkRule = async (data, client = getPool()) => {

@@ -12,11 +12,12 @@ import workSiteRouter from './routers/work-site.route.js';
 import resourceRouter from './routers/resource.route.js';
 import categoryRouter from './routers/category.route.js';
 import timeEntryRouter from './routers/time-entries.route.js';
-import companyAttendanceRoutes from './routers/attendance.route.js';
 import workRuleRouter from './routers/work-rule.route.js';
 import scheduleRouter from './routers/schedule.route.js';
 import vacationRouter from './routers/vacation.route.js';
 import sickLeaveRouter from './routers/sick-leave.route.js';
+import contractorRouter from './routers/contractor.route.js';
+import attendanceRoutes from './routers/attendance.route.js';
 import globalErrorHandler from './controllers/error.controller.js';
 
 dotenv.config({ path: './config.env' });
@@ -63,11 +64,12 @@ app.use('/api/v1/worksites', workSiteRouter);
 app.use('/api/v1/resources', resourceRouter);
 app.use('/api/v1/categories', categoryRouter);
 app.use('/api/v1/timeentries', timeEntryRouter);
-app.use('/api/v1/attendance', companyAttendanceRoutes);
 app.use('/api/v1/workrules', workRuleRouter);
 app.use('/api/v1/schedules', scheduleRouter);
 app.use('/api/v1/vacations', vacationRouter);
 app.use('/api/v1/sickleaves', sickLeaveRouter);
+app.use('/api/v1/contractors', contractorRouter);
+app.use('/api/v1/attendance', attendanceRoutes);
 
 // ERROR MIDDLEWARE
 app.use(globalErrorHandler);
