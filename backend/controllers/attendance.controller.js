@@ -1,10 +1,8 @@
-import * as companyAttendanceService from '../services/attendance.service.js';
+import * as attendanceService from '../services/attendance.service.js';
 import catchAsync from '../utils/catch-async.js';
 
 export const getAttendance = catchAsync(async (req, res, next) => {
-  const attendance = await companyAttendanceService.getAttendance(
-    req.params.id,
-  );
+  const attendance = await attendanceService.getAttendance(req.params.id);
 
   res.status(200).json({
     status: 'success',
@@ -15,10 +13,10 @@ export const getAttendance = catchAsync(async (req, res, next) => {
 });
 
 export const getAllAttendances = catchAsync(async (req, res, next) => {
-  const attendances = await companyAttendanceService.getAllAttendances(
+  const attendances = await attendanceService.getAllAttendances(
     req.user,
     req.workSiteId,
-    req.companyId,
+    req.contractorId,
     req.period,
   );
 
@@ -32,8 +30,7 @@ export const getAllAttendances = catchAsync(async (req, res, next) => {
 });
 
 export const createAttendance = catchAsync(async (req, res, next) => {
-  const data = { ...req.body, userId: req.user.id };
-  const attendance = await companyAttendanceService.createAttendance(data);
+  const attendance = await attendanceService.createAttendance(req.body);
 
   res.status(200).json({
     status: 'success',
@@ -44,7 +41,7 @@ export const createAttendance = catchAsync(async (req, res, next) => {
 });
 
 export const updateAttendance = catchAsync(async (req, res, next) => {
-  const attendance = await companyAttendanceService.updateAttendance(
+  const attendance = await attendanceService.updateAttendance(
     req.params.id,
     req.body,
   );
@@ -58,9 +55,7 @@ export const updateAttendance = catchAsync(async (req, res, next) => {
 });
 
 export const deleteAttendance = catchAsync(async (req, res, next) => {
-  const attendance = await companyAttendanceService.deleteAttendance(
-    req.params.id,
-  );
+  const attendance = await attendanceService.deleteAttendance(req.params.id);
 
   res.status(200).json({
     status: 'success',

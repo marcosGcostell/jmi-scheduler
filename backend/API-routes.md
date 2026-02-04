@@ -79,14 +79,6 @@
 - DELETE `/api/v1/time-entries/:id`
 - PATCH `/api/v1/time-entries/:id/fix-worked-minutes`
 
-## Attendance
-
-- GET `/api/v1/attendance/`
-- POST `/api/v1/attendance/`
-- GET `/api/v1/attendance/:id`
-- PATCH `/api/v1/attendance/:id`
-- DELETE `/api/v1/attendance/:id`
-
 ## Vacations
 
 - GET `/api/v1/vacations/:id`
@@ -102,3 +94,19 @@
 - POST `/api/v1/sick-leaves/` (admin)
 - PATCH `/api/v1/sick-leaves/:id` (admin)
 - DELETE `/api/v1/sick-leaves/:id` (admin)
+
+## Contractors
+
+- GET `/api/v1/contractors/`
+- POST `/api/v1/contractors/`
+- GET `/api/v1/contractors/:id`
+- PATCH `/api/v1/contractors/:id`
+- DELETE `/api/v1/contractors/:id` (admin)
+
+## Attendance
+
+- GET `/api/v1/attendance/`
+- POST `/api/v1/attendance/`
+- GET `/api/v1/attendance/:id`
+- PATCH `/api/v1/attendance/:id`
+- DELETE `/api/v1/attendance/:id`

@@ -1,20 +1,19 @@
-import * as CompanyAttendance from '../models/attendance.model.js';
-
+import * as Attendance from '../models/attendance.model.js';
 import workSiteExists from '../domain/assertions/work-site-exists.js';
-import companyExists from '../domain/assertions/company-exists.js';
-import companyAttendanceExists from '../domain/assertions/attendance-exists.js';
+import contractorExists from '../domain/assertions/contractor-exists.js';
+import attendanceExists from '../domain/assertions/attendance-exists.js';
 import isMyWorkSite from '../domain/helpers/is-my-work-site.js ';
 import { getPool } from '../db/pool.js';
 import AppError from '../utils/app-error.js';
 
 export const getAttendance = async id => {
-  return companyAttendanceExists(id);
+  return attendanceExists(id);
 };
 
 export const getAllAttendances = async (
   user,
   workSiteId,
-  companyId,
+  contractorId,
   period,
 ) => {
   const client = await getPool().connect();
@@ -30,10 +29,10 @@ export const getAllAttendances = async (
           'Solo estás autorizado a obtener registros de obras en las que estás asignado.',
         );
     } else if (workSiteId) await workSiteExists(workSiteId, client);
-    if (companyId) await companyExists(companyId, 'regular', client);
+    if (contractorId) await contractorExists(contractorId, client);
 
-    const attendances = await CompanyAttendance.getAllAttendances(
-      { workSiteId, companyId, period },
+    const attendances = await Attendance.getAllAttendances(
+      { workSiteId, contractorId, period },
       client,
     );
 
@@ -52,32 +51,10 @@ export const createAttendance = async data => {
 
   try {
     await client.query('BEGIN');
+    await workSiteExists(data.workSiteId, client);
+    await contractorExists(data.contractorId, client);
 
-    const { workSiteId, companyId, date, workersCount, userId } = data;
-
-    await workSiteExists(workSiteId, client);
-    const company = await companyExists(companyId, 'regular', client);
-
-    // Do not allow to create records for the main company
-    if (company.is_main) {
-      throw new AppError(
-        400,
-        'No se permite registrar asistencia para la empresa principal.',
-      );
-    }
-
-    const modelData = {
-      workSiteId,
-      companyId,
-      date,
-      workersCount,
-      userId,
-    };
-
-    const attendance = await CompanyAttendance.createAttendance(
-      modelData,
-      client,
-    );
+    const attendance = await Attendance.createAttendance(data, client);
 
     await client.query('COMMIT');
     return attendance;
@@ -94,19 +71,11 @@ export const updateAttendance = async (id, data) => {
 
   try {
     await client.query('BEGIN');
-    await companyAttendanceExists(id, client);
+    await attendanceExists(id, client);
 
-    const { workersCount } = data;
+    const workersCount = data.workersCount ?? 0;
 
-    const modelData = {
-      workersCount,
-    };
-
-    const attendance = await CompanyAttendance.updateAttendance(
-      id,
-      modelData,
-      client,
-    );
+    const attendance = await Attendance.updateAttendance(id, workersCount, client);
 
     await client.query('COMMIT');
     return attendance;
@@ -119,7 +88,7 @@ export const updateAttendance = async (id, data) => {
 };
 
 export const deleteAttendance = async id => {
-  const attendance = await CompanyAttendance.deleteAttendance(id);
+  const attendance = await Attendance.deleteAttendance(id);
   if (!attendance) {
     throw new AppError(400, 'No se encuentra este registro de asistencia.');
   }

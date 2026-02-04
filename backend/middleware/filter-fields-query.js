@@ -4,10 +4,12 @@ import catchAsync from '../utils/catch-async.js';
 import valildateUUID from '../domain/validators/validate-uuid.js';
 
 export default catchAsync(async (req, res, next) => {
-  const { workSiteId, companyId } = { ...qs.parse(req.query) };
+  const { workSiteId, companyId, contractorId } = { ...qs.parse(req.query) };
 
   if (workSiteId && valildateUUID(workSiteId)) req.workSiteId = workSiteId;
   if (companyId && valildateUUID(companyId)) req.companyId = companyId;
+  if (contractorId && valildateUUID(contractorId))
+    req.contractorId = contractorId;
 
   next();
 });

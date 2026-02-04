@@ -93,10 +93,8 @@ export const createAttendance = async (data, client = getPool()) => {
   }
 };
 
-export const updateAttendance = async (id, data, client = getPool()) => {
+export const updateAttendance = async (id, workersCount, client = getPool()) => {
   try {
-    const { workersCount } = data;
-
     const { rows } = await client.query(
       `
       UPDATE contractor_attendance
