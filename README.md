@@ -9,7 +9,7 @@ This software is developed by Marcos García under the brand **KuantiK Software.
 ### Version
 
 API: 0.17.0
-Client: 0.0.0
+Client: 0.1.0
 
 ### Register 2026/02/04
 
