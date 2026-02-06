@@ -1,0 +1,9 @@
+/**
+ * Main CSS - Imports all other stylesheets
+ */
+
+@import './reset.css';
+@import './variables.css';
+@import './components.css';
+@import './views.css';
+@import './animations.css';
