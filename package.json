@@ -1,7 +1,7 @@
 {
-  "name": "jmi-scheduler",
+  "name": "jmi-tracker",
   "version": "1.0.0",
-  "description": "JMI Obras Scheduler",
+  "description": "JMI Tracker",
   "main": "server.js",
   "type": "module",
   "scripts": {
@@ -9,7 +9,7 @@
     "back": "npm run dev --prefix backend",
     "front": "vite --config vite.config.js"
   },
-  "author": "Kuantik Software",
+  "author": "KuantiK Software",
   "license": "ISC",
   "devDependencies": {
     "concurrently": "^9.2.1",

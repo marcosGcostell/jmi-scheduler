@@ -1,7 +1,7 @@
 {
-  "name": "jmi-scheduler-api",
+  "name": "jmi-tracker-api",
   "version": "1.0.0",
-  "description": "Rest API for JMI Obras Scheduler",
+  "description": "Rest API for JMI Tracker",
   "main": "server.js",
   "type": "module",
   "scripts": {
